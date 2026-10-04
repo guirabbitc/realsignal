@@ -9,8 +9,8 @@ Working plan and status for the `worktree-audio-input` branch. A fresh session r
 | 0. Recon and plan | **done** | Answers under "Decided" |
 | 1. Analyzer `POST /transcribe` | **done** | ruff pass, pytest 84/84. The Scribe response in `tests/recordings/audio/synthetic.scribe.json` is **synthetic** (docs shape) until a real recording exists |
 | 2. Contract and web API | **done** | lint, typecheck, Vitest 49/49, pytest 91/91. `/api/transcribe` streams a heartbeat (Q-B adopted) |
-| 3. UI | **in progress** | |
-| 4. Real round trip | — | Needs `ELEVENLABS_API_KEY` |
+| 3. UI | **done** | lint, typecheck, Vitest 55/55; Playwright: record journey + real text journey pass with the flag on, text journey passes with it off; 22 screens in `docs/features/audio-input/screens/`; no `ELEVENLABS`/`xi-api-key` in the build output |
+| 4. Real round trip | **blocked** | Needs `ELEVENLABS_API_KEY` and the team-recorded audio (`real_pain.m4a`, `polite.m4a`) |
 | 5. Ship (draft PR) | — | |
 
 ### Environment (this worktree only)
