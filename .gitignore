@@ -1,0 +1,8 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+# uAgents local storage (ctx.storage) and keys
+*_data.json
+private_keys.json
