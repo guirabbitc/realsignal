@@ -6,3 +6,7 @@ __pycache__/
 # uAgents local storage (ctx.storage) and keys
 *_data.json
 private_keys.json
+node_modules/
+.next/
+*.tsbuildinfo
+.pytest_cache/

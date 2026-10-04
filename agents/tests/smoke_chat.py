@@ -13,7 +13,7 @@ import certifi
 
 # python.org builds of Python on macOS ship without root certificates
 os.environ.setdefault("SSL_CERT_FILE", certifi.where())
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "agents" / "front"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "front"))
 
 from chat_proto import chat_proto  # noqa: E402
 from uagents import Agent, Bureau, Context, Protocol  # noqa: E402

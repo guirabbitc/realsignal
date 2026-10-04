@@ -1,4 +1,0 @@
-uagents==0.26.0
-uagents-core==0.4.11
-python-dotenv>=1.0
-certifi
