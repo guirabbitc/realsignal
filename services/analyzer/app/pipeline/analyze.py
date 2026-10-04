@@ -1,5 +1,8 @@
 """Orchestrates the pipeline: split -> Jev -> score -> gate -> verdict -> OpenAI -> verify.
 
+It runs as two halves, judge_interview (everything decided) and write_readout (the text), so they can be
+called one after the other (run_analysis) or from separate processes.
+
 Jev judges, OpenAI writes, Python counts.
 """
 
@@ -7,8 +10,10 @@ import asyncio
 from collections.abc import Mapping
 from typing import Any
 
+from pydantic import BaseModel
+
 from app.errors import WriterUnverifiable
-from app.models import AnalyzeRequest, AnalyzeResult, FounderFlags, ModelVersions, Statement
+from app.models import AnalyzeRequest, AnalyzeResult, FounderFlags, ModelVersions, Statement, Verdict
 from app.pipeline.gate import missing_evidence_text, post_gate_failure, pre_gate_failures
 from app.pipeline.jev import Judge
 from app.pipeline.scoring import compute_score, count_non_neutral, group_of
@@ -66,9 +71,26 @@ def _verified(output: WriterOutput, transcript: str) -> WriterOutput | None:
     return WriterOutput(summary=output.summary, reasons=reasons, next_questions=output.next_questions)
 
 
-async def run_analysis(
-    req: AnalyzeRequest, judge: Judge, writer: WriterBackend, rubric: Mapping[str, Any]
-) -> AnalyzeResult:
+class Judged(BaseModel):
+    """Everything decided before any text is written: the output of the judging half of the pipeline.
+
+    It is plain data, so the judging and the writing can run in different processes (the Fetch.ai
+    specialist agents pass it between them). The writer never changes any of it (MISSION invariant 4).
+    """
+
+    statements: list[Statement]
+    score: int | None
+    verdict: Verdict
+    verdict_confidence: float | None
+    founder_talk_ratio: float | None
+    pitched_early: float | None
+    leading_questions: float | None
+    missing_evidence: str | None
+    jev_model: str
+
+
+async def judge_interview(req: AnalyzeRequest, judge: Judge, rubric: Mapping[str, Any]) -> Judged:
+    """Steps split -> Jev -> score -> gate -> verdict."""
     split = split_transcript(req.transcript, rubric["limits"]["max_transcript_chars"])
 
     statements, (pitched_early, leading_questions) = await asyncio.gather(
@@ -95,15 +117,34 @@ async def run_analysis(
         else:
             verdict = judged.verdict
 
-    missing = missing_evidence_text(failures)
+    return Judged(
+        statements=statements,
+        score=score,
+        verdict=verdict,
+        verdict_confidence=verdict_confidence,
+        founder_talk_ratio=split.founder_talk_ratio,
+        pitched_early=pitched_early,
+        leading_questions=leading_questions,
+        missing_evidence=missing_evidence_text(failures),
+        jev_model=judge.backend.model,
+    )
+
+
+async def write_readout(
+    req: AnalyzeRequest, judged: Judged, writer: WriterBackend, rubric: Mapping[str, Any]
+) -> AnalyzeResult:
+    """Steps OpenAI -> verify. Returns the full result; every judged value is passed through unchanged."""
     flags = rubric["founder_flags"]
     founder = {
-        "talk_ratio": split.founder_talk_ratio,
-        "pitched_early": pitched_early,
-        "leading_questions": leading_questions,
+        "talk_ratio": judged.founder_talk_ratio,
+        "pitched_early": judged.pitched_early,
+        "leading_questions": judged.leading_questions,
         "thresholds": flags,
     }
-    payload = _writer_payload(req, rubric, statements, score, verdict, verdict_confidence, missing, founder)
+    payload = _writer_payload(
+        req, rubric, judged.statements, judged.score, judged.verdict, judged.verdict_confidence,
+        judged.missing_evidence, founder,
+    )
 
     written = None
     for _ in range(2):  # one retry (SPEC §5 step 9)
@@ -114,21 +155,27 @@ async def run_analysis(
         raise WriterUnverifiable("The read-out quoted words that are not in the transcript.")
 
     return AnalyzeResult(
-        score=score,
-        verdict=verdict,
-        verdict_confidence=verdict_confidence,
-        founder_talk_ratio=split.founder_talk_ratio,
-        pitched_early=pitched_early,
-        leading_questions=leading_questions,
-        statements=statements,
+        score=judged.score,
+        verdict=judged.verdict,
+        verdict_confidence=judged.verdict_confidence,
+        founder_talk_ratio=judged.founder_talk_ratio,
+        pitched_early=judged.pitched_early,
+        leading_questions=judged.leading_questions,
+        statements=judged.statements,
         summary=written.summary,
         reasons=written.reasons,
         next_questions=written.next_questions,
-        missing_evidence=missing,
+        missing_evidence=judged.missing_evidence,
         model_versions=ModelVersions(
-            jev=judge.backend.model,
+            jev=judged.jev_model,
             openai=writer.model,
             rubric=rubric["version"],
             founder_flags=FounderFlags(**flags),
         ),
     )
+
+
+async def run_analysis(
+    req: AnalyzeRequest, judge: Judge, writer: WriterBackend, rubric: Mapping[str, Any]
+) -> AnalyzeResult:
+    return await write_readout(req, await judge_interview(req, judge, rubric), writer, rubric)
