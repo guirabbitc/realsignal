@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { ChatWidget } from "@/components/chat/ChatWidget";
 import { Stone } from "@/components/ui/Stone";
 
 import { CurrentIdeaContext } from "./current-idea";
@@ -124,6 +125,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <main className="min-w-0 flex-1 px-5 pt-6 pb-16 wide:px-12 wide:pt-10 wide:pb-24">
           <div className="mx-auto flex max-w-[1040px] flex-col gap-7">{children}</div>
         </main>
+        {/* The chat page is the same conversation at full size. */}
+        {pathname !== "/chat" && <ChatWidget />}
       </div>
     </CurrentIdeaContext>
   );

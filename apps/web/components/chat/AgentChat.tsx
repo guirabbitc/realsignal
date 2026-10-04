@@ -37,7 +37,8 @@ function Reply({ text }: { text: string }) {
   );
 }
 
-export function AgentChat() {
+/** `compact` is the floating window (ChatWidget): no title, and the messages scroll inside a fixed height. */
+export function AgentChat({ compact = false }: { compact?: boolean }) {
   const [messages, setMessages] = useState<Message[]>([WELCOME]);
   const [draft, setDraft] = useState("");
   const [waiting, setWaiting] = useState(false);
@@ -73,15 +74,17 @@ export function AgentChat() {
   }
 
   return (
-    <section aria-label="Chat with the agents" className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1.5">
-        <h1 className="m-0 font-serif text-[clamp(34px,4.4vw,52px)] leading-[1.05] font-medium tracking-[-0.02em]">Chat with the agents</h1>
-        <span className="text-base text-ink-soft">
-          The same team of Fetch.ai agents you can talk to in ASI:One: Intake, Signal Analyst and Strategist.
-        </span>
-      </div>
+    <section aria-label="Chat with the agents" className={compact ? "flex min-h-0 flex-1 flex-col" : "flex flex-col gap-6"}>
+      {!compact && (
+        <div className="flex flex-col gap-1.5">
+          <h1 className="m-0 font-serif text-[clamp(34px,4.4vw,52px)] leading-[1.05] font-medium tracking-[-0.02em]">Chat with the agents</h1>
+          <span className="text-base text-ink-soft">
+            The same team of Fetch.ai agents you can talk to in ASI:One: Intake, Signal Analyst and Strategist.
+          </span>
+        </div>
+      )}
 
-      <div className="card flex flex-col gap-4 px-5 py-5" aria-live="polite">
+      <div className={compact ? "flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-4" : "card flex flex-col gap-4 px-5 py-5"} aria-live="polite">
         {messages.map((message, i) =>
           message.from === "agents" ? (
             <div key={i} className="flex items-start gap-3">
@@ -108,21 +111,32 @@ export function AgentChat() {
       </div>
 
       <form
-        className="flex flex-col gap-3"
+        className={compact ? "flex flex-col gap-2 border-t-[2.5px] border-ink px-4 py-3" : "flex flex-col gap-3"}
         onSubmit={(event) => {
           event.preventDefault();
           void send();
         }}
       >
-        <label htmlFor="agent-chat-message" className="text-[15px] font-bold text-ink">
+        <label htmlFor="agent-chat-message" className={compact ? "sr-only" : "text-[15px] font-bold text-ink"}>
           Your message
         </label>
         <textarea
           id="agent-chat-message"
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
-          rows={5}
-          placeholder={"Your idea in one sentence, or the transcript:\nFounder: How do you handle bookings today?\nCustomer: I answer them myself between services."}
+          // In the small window Enter sends, as in a messenger; a pasted transcript keeps its line breaks.
+          onKeyDown={(event) => {
+            if (compact && event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+              event.preventDefault();
+              void send();
+            }
+          }}
+          rows={compact ? 2 : 5}
+          placeholder={
+            compact
+              ? "Your idea, or paste the transcript"
+              : "Your idea in one sentence, or the transcript:\nFounder: How do you handle bookings today?\nCustomer: I answer them myself between services."
+          }
           className="w-full rounded-xl border-[2.5px] border-ink bg-white px-4 py-3 text-[16px] text-ink"
         />
         <button type="submit" disabled={waiting || !draft.trim()} className="btn btn-primary self-start px-6 disabled:cursor-not-allowed disabled:opacity-60">
