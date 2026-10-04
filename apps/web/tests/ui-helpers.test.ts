@@ -1,6 +1,3 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-
 import { describe, expect, it } from "vitest";
 
 import type { IdeaInterviewRow } from "../components/api";
@@ -8,13 +5,29 @@ import { barHeight, readOuts, shortName, trendCaption } from "../components/idea
 import { detectSpeakers, guessRoles, needsMapping, relabel } from "../components/upload/checks";
 import { EXAMPLES } from "../lib/examples";
 
-const FIXTURES = resolve(__dirname, "../../../services/analyzer/fixtures");
+// The analyzer's gate needs 150 customer words (rubric.json); an example below it would always
+// come back "Not enough evidence yet".
+const MIN_CUSTOMER_WORDS = 150;
 
 describe("examples", () => {
-  it("are the polite, mixed and real_pain reference fixtures, copied verbatim", () => {
+  it("are one polite, one mixed and one real_pain interview", () => {
     expect(EXAMPLES.map((e) => e.key)).toEqual(["polite", "mixed", "real_pain"]);
+  });
+
+  it("use only Founder:/Customer: labels, so they go straight to the analyzer", () => {
     for (const example of EXAMPLES) {
-      expect(example.transcript).toBe(readFileSync(resolve(FIXTURES, `${example.key}.txt`), "utf8"));
+      expect(detectSpeakers(example.transcript).map((s) => s.key)).toEqual(["founder", "customer"]);
+      expect(needsMapping(detectSpeakers(example.transcript))).toBe(false);
+    }
+  });
+
+  it("give the customer enough words to pass the evidence gate", () => {
+    for (const example of EXAMPLES) {
+      const customerWords = example.transcript
+        .split("\n")
+        .filter((line) => line.startsWith("Customer:"))
+        .flatMap((line) => line.slice("Customer:".length).trim().split(/\s+/));
+      expect(customerWords.length).toBeGreaterThanOrEqual(MIN_CUSTOMER_WORDS);
     }
   });
 });

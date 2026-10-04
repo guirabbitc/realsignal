@@ -61,7 +61,7 @@ export function Home() {
             value={draft}
             maxLength={MAX_IDEA_CHARS}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="Booking software for restaurants that hate phone reservations."
+            placeholder="Automated SOC 2 evidence collection for seed-stage SaaS startups."
             className="box-border min-h-[52px] min-w-0 flex-[1_1_320px] rounded-xl border-[2.5px] border-ink bg-white px-4 font-sans text-[17px] text-ink placeholder:text-muted"
           />
           <button
