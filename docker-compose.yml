@@ -1,0 +1,20 @@
+# Local Postgres. Only apps/web connects to it.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: realsignal
+      POSTGRES_PASSWORD: realsignal
+      POSTGRES_DB: realsignal
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U realsignal"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:

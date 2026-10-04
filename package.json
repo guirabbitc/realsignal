@@ -4,6 +4,10 @@
   "packageManager": "pnpm@12.9.1",
   "scripts": {
     "contracts:generate": "pnpm --filter @realsignal/contracts generate",
-    "contracts:check": "pnpm --filter @realsignal/contracts check"
+    "contracts:check": "pnpm --filter @realsignal/contracts check",
+    "dev:web": "pnpm --filter @realsignal/web dev",
+    "db:migrate": "pnpm --filter @realsignal/web db:migrate",
+    "db:generate": "pnpm --filter @realsignal/web db:generate",
+    "typecheck": "pnpm -r typecheck"
   }
 }

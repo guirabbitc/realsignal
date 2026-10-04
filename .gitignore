@@ -10,3 +10,4 @@ node_modules/
 .next/
 *.tsbuildinfo
 .pytest_cache/
+next-env.d.ts

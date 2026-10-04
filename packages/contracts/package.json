@@ -9,5 +9,8 @@
   },
   "devDependencies": {
     "json-schema-to-typescript": "^15.0.4"
+  },
+  "exports": {
+    "./analyze.schema.json": "./analyze.schema.json"
   }
 }
