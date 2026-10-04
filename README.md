@@ -28,6 +28,7 @@ Customers are polite. "Cool idea" and "I'd use that" feel like validation, but t
 | `apps/web` | Next.js 16 app: pages, `/api` routes, Drizzle schema, anonymous session. The only thing that touches Postgres. |
 | `services/analyzer` | Python + FastAPI analysis pipeline. Stateless. |
 | `packages/contracts` | `analyze.schema.json`, the contract both services agree on. |
+| `agents` | Fetch.ai uAgents for ASI:One and the web chat: a front agent and three specialists that run the analyzer pipeline, plus a tester. See [`agents/README.md`](agents/README.md). |
 | `scripts/journey.py` | The 9-step main journey, run against any URL. |
 | `docs/` | [`PRD.md`](docs/PRD.md) (what and why) and [`SPEC.md`](docs/SPEC.md) (how). |
 | `MISSION.md`, `FACTORY_RULES.md`, `FACTORY.md` | The dark-factory guidance layer (what the autonomous builder may and may not do). |
@@ -52,6 +53,19 @@ Try it:
 python3 scripts/journey.py http://localhost:3000 real_pain    # expects keep_going, score > 70
 python3 scripts/journey.py http://localhost:3000 polite       # expects pivot or need_more_evidence, score < 30
 ```
+
+### If every page except the home page says "This page doesn't exist"
+
+This happened once in local development: `/` loaded, but `/ideas`, `/chat` and every idea page returned the not-found page, while the `/api` routes kept working and the data was saved correctly.
+
+- **Why:** `next dev` was started on top of a `apps/web/.next` folder that a production `next build` had just written, while `next typegen` (part of `pnpm validate`) was writing to the same folder. The dev server came up with a route table that knew only the home page. Nothing was wrong in the code or the database.
+- **Fix:** stop the dev server, delete the build folder, start it again:
+
+```bash
+rm -rf apps/web/.next && pnpm --filter web dev
+```
+
+- **Avoid it:** don't run `pnpm --filter web build` or `pnpm validate` in this folder while the dev server is running. Use a second checkout (`git worktree add`) for that.
 
 ## Test
 
