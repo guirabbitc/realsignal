@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { IdeaSummary } from "@/components/api";
 import { VERDICT_LABEL, VERDICT_STONE } from "@/components/read-out/view-model";
 import { Stone } from "@/components/ui/Stone";
+import { isExampleIdea } from "@/lib/examples";
 
 // GET /api/ideas returns the latest verdict but not its score, so the card shows the verdict only.
 export function IdeaCard({ idea }: { idea: IdeaSummary }) {
@@ -12,6 +13,7 @@ export function IdeaCard({ idea }: { idea: IdeaSummary }) {
       href={`/ideas/${idea.id}`}
       className="card flex flex-col gap-3.5 px-6 py-[22px] text-ink no-underline hover:bg-white hover:text-ink hover:shadow-[4px_4px_0_var(--color-ink)]"
     >
+      {isExampleIdea(idea.one_liner) && <span className="tag self-start">Example</span>}
       <span className="font-serif text-[23px] leading-[1.15] font-medium text-pretty">{idea.one_liner}</span>
       {idea.latest_verdict ? (
         <span className="flex items-center gap-3">

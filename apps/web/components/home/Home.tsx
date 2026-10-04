@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { ApiError, apiPost, useApi, type IdeaSummary } from "@/components/api";
 import { IdeaCard, IdeaGrid } from "@/components/ideas/IdeaCard";
+import { EXAMPLES } from "@/lib/examples";
 
 const MAX_IDEA_CHARS = 500;
 
@@ -73,6 +74,13 @@ export function Home() {
           </button>
         </div>
         <span className="text-sm text-muted">One idea, one sentence. Add as many interviews to it as you like.</span>
+        <span className="text-sm text-muted">
+          No interview yet?{" "}
+          <Link href="/examples" className="font-bold">
+            Try one of {EXAMPLES.length} example interviews
+          </Link>
+          .
+        </span>
         {error && (
           <p role="alert" className="m-0 text-[15px] font-bold text-danger">
             {error}

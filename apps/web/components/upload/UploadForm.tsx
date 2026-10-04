@@ -6,7 +6,10 @@ import { useMemo, useState } from "react";
 
 import { ApiError, apiPost, useApi, type IdeaDetail } from "@/components/api";
 import { Breadcrumb, LoadFailed, Notice, Skeleton, Steps } from "@/components/ui/feedback";
-import { EXAMPLE_IDEA, EXAMPLES, type ExampleKey } from "@/lib/examples";
+import { TYPE_LABEL, useRunExample } from "@/components/examples/ExamplesGallery";
+import { EXAMPLES, FEATURED_EXAMPLE_KEYS } from "@/lib/examples";
+
+const FEATURED = EXAMPLES.filter((e) => FEATURED_EXAMPLE_KEYS.includes(e.key));
 
 import { detectSpeakers, guessRoles, MAX_TRANSCRIPT_CHARS, needsMapping, relabel, type Role, type Speaker } from "./checks";
 
@@ -100,7 +103,9 @@ function Form({ idea }: { idea: IdeaDetail }) {
   const [who, setWho] = useState("");
   const [consent, setConsent] = useState(false);
   const [tried, setTried] = useState(false);
-  const [sending, setSending] = useState<"form" | ExampleKey | null>(null);
+  const [sending, setSending] = useState(false);
+  const examples = useRunExample();
+  const busy = sending || examples.running !== null;
   const [sendError, setSendError] = useState<string | null>(null);
   const [roleChoices, setRoleChoices] = useState<Record<string, Role>>({});
 
@@ -113,14 +118,14 @@ function Form({ idea }: { idea: IdeaDetail }) {
   const tooLong = text.length > MAX_TRANSCRIPT_CHARS;
   const ready = hasText && consent;
 
-  async function send(payload: { transcript: string; kind: Kind; interviewee_label: string | null }, which: "form" | ExampleKey) {
-    setSending(which);
+  async function send(payload: { transcript: string; kind: Kind; interviewee_label: string | null }) {
+    setSending(true);
     setSendError(null);
     try {
       const created = await apiPost<{ id: string }>("/api/interviews", { idea_id: idea.id, ...payload });
       router.push(`/interviews/${created.id}`);
     } catch (error) {
-      setSending(null);
+      setSending(false);
       setSendError(sendErrorCopy(error));
     }
   }
@@ -128,9 +133,9 @@ function Form({ idea }: { idea: IdeaDetail }) {
   function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     setTried(true);
-    if (!ready || tooLong || speakers.length === 0 || noCustomer || sending) return;
+    if (!ready || tooLong || speakers.length === 0 || noCustomer || busy) return;
     const transcript = mapping ? relabel(text, roles) : text;
-    send({ transcript, kind, interviewee_label: who.trim() || null }, "form");
+    send({ transcript, kind, interviewee_label: who.trim() || null });
   }
 
   async function onFile(event: React.ChangeEvent<HTMLInputElement>) {
@@ -277,10 +282,10 @@ function Form({ idea }: { idea: IdeaDetail }) {
         <div className="flex flex-wrap items-center gap-3.5 border-t-[2.5px] border-line pt-5">
           <button
             type="submit"
-            disabled={!ready || sending !== null}
+            disabled={!ready || busy}
             className="btn btn-primary min-h-[52px] px-6 text-[17px] disabled:cursor-not-allowed disabled:border-stone-grey disabled:bg-line disabled:text-muted"
           >
-            {sending === "form" ? "Sending…" : "Check my interview"}
+            {sending ? "Sending…" : "Check my interview"}
           </button>
           <span className="text-sm text-muted">
             {!hasText ? "Paste or upload a transcript first." : !consent ? "Tick the consent box to continue." : "Takes up to 2 minutes."}
@@ -296,21 +301,28 @@ function Form({ idea }: { idea: IdeaDetail }) {
       <aside className="card flex min-w-0 flex-[2_1_280px] flex-col gap-3.5 p-6">
         <h2 className="m-0 font-serif text-[26px] font-medium">Try an example</h2>
         <p className="m-0 text-[15px] leading-normal text-ink-soft">
-          One click. We fill everything in and run it. Made-up interviews with startup founders, all testing one idea: “
-          {EXAMPLE_IDEA}”
+          One click opens a made-up interview with a startup founder. Each runs under its own example idea, not this one.
         </p>
-        {EXAMPLES.map((example) => (
+        {FEATURED.map((example) => (
           <button
             key={example.key}
             type="button"
-            disabled={sending !== null}
-            onClick={() => send({ transcript: example.transcript, kind: "interview", interviewee_label: example.intervieweeLabel }, example.key)}
+            disabled={busy}
+            onClick={() => examples.run(example)}
             className="flex min-h-[52px] cursor-pointer flex-col items-start gap-0.5 rounded-xl border-[2.5px] border-ink bg-white px-4 py-3 text-left font-sans text-ink hover:bg-line disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <strong className="text-base">{sending === example.key ? "Sending…" : example.title}</strong>
+            <strong className="text-base">{examples.running === example.key ? "Starting…" : TYPE_LABEL[example.type]}</strong>
             <span className="text-sm text-muted">{example.intervieweeLabel}</span>
           </button>
         ))}
+        <Link href="/examples" className="text-[15px] font-bold">
+          See all {EXAMPLES.length} examples
+        </Link>
+        {examples.error && (
+          <p role="alert" className="m-0 text-sm font-bold text-danger">
+            {examples.error}
+          </p>
+        )}
         <div className="flex flex-col gap-1.5 border-t-[2.5px] border-line pt-3.5">
           <span className="text-[13px] font-bold text-muted">What we need</span>
           <span className="font-mono text-sm leading-relaxed">

@@ -7,6 +7,7 @@ import { useApi, type IdeaDetail, type IdeaInterviewRow } from "@/components/api
 import { shortDate, VERDICT_LABEL, VERDICT_STONE } from "@/components/read-out/view-model";
 import { Breadcrumb, LoadFailed, Notice, Skeleton } from "@/components/ui/feedback";
 import { Stone } from "@/components/ui/Stone";
+import { isExampleIdea } from "@/lib/examples";
 
 import { barHeight, readOuts, shortName, STALE_PROCESSING_MS, trendCaption, type ReadOutRow } from "./history";
 
@@ -153,6 +154,12 @@ export function IdeaHistory({ ideaId }: { ideaId: string }) {
   return (
     <section aria-label="Idea history" className="flex flex-col gap-6">
       <Breadcrumb />
+      {isExampleIdea(idea.one_liner) && (
+        <p className="m-0 text-sm text-muted">
+          <span className="tag mr-2">Example</span>
+          This idea holds the example interviews you ran. <Link href="/examples">See all examples</Link>
+        </p>
+      )}
       <div className="flex flex-wrap items-end justify-between gap-5">
         <h1 className="m-0 flex-[1_1_420px] font-serif text-[clamp(30px,3.8vw,46px)] leading-[1.08] font-medium tracking-[-0.02em] text-balance">
           {idea.one_liner}
