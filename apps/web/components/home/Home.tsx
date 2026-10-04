@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { ApiError, apiPost, useApi, type IdeaSummary } from "@/components/api";
 import { IdeaCard, IdeaGrid } from "@/components/ideas/IdeaCard";
+import { EXAMPLES } from "@/lib/examples";
 
 const MAX_IDEA_CHARS = 500;
 
@@ -61,7 +62,7 @@ export function Home() {
             value={draft}
             maxLength={MAX_IDEA_CHARS}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="Booking software for restaurants that hate phone reservations."
+            placeholder="Automated SOC 2 evidence collection for seed-stage SaaS startups."
             className="box-border min-h-[52px] min-w-0 flex-[1_1_320px] rounded-xl border-[2.5px] border-ink bg-white px-4 font-sans text-[17px] text-ink placeholder:text-muted"
           />
           <button
@@ -73,6 +74,13 @@ export function Home() {
           </button>
         </div>
         <span className="text-sm text-muted">One idea, one sentence. Add as many interviews to it as you like.</span>
+        <span className="text-sm text-muted">
+          No interview yet?{" "}
+          <Link href="/examples" className="font-bold">
+            Try one of {EXAMPLES.length} example interviews
+          </Link>
+          .
+        </span>
         {error && (
           <p role="alert" className="m-0 text-[15px] font-bold text-danger">
             {error}

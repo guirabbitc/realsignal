@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { ChatWidget } from "@/components/chat/ChatWidget";
 import { Stone } from "@/components/ui/Stone";
+import { EXAMPLES } from "@/lib/examples";
 
 import { CurrentIdeaContext } from "./current-idea";
 
@@ -74,6 +75,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <nav aria-label="Main" className="flex flex-col gap-1">
             <NavItem href="/" label="Home" active={pathname === "/"} />
             <NavItem href="/ideas" label="My ideas" count={ideas ? String(ideas.length) : ""} active={pathname === "/ideas"} />
+            <NavItem href="/examples" label="Examples" count={String(EXAMPLES.length)} active={pathname === "/examples"} />
             <NavItem href="/chat" label="Chat with the agents" active={pathname === "/chat"} />
           </nav>
           <nav aria-label="Ideas" className="flex flex-col gap-1.5">
@@ -107,19 +109,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           )}
         </aside>
 
-        <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b-[2.5px] border-ink bg-paper px-5 py-3 wide:hidden">
-          <Logo size="sm" />
-          <div className="flex items-center gap-3.5">
-            <Link href="/ideas" className="text-[15px] font-bold text-ink">
-              My ideas
-            </Link>
-            <Link href="/chat" className="text-[15px] font-bold text-ink">
-              Chat
-            </Link>
+        <header className="sticky top-0 z-10 flex flex-col gap-2 border-b-[2.5px] border-ink bg-paper px-5 py-3 wide:hidden">
+          <div className="flex items-center justify-between gap-3">
+            <Logo size="sm" />
             <Link href="/" className="btn btn-primary">
               New idea
             </Link>
           </div>
+          <nav aria-label="Main" className="flex flex-wrap gap-x-5 gap-y-1 px-1.5">
+            {[
+              ["/ideas", "My ideas"],
+              ["/examples", "Examples"],
+              ["/chat", "Chat"],
+            ].map(([href, label]) => (
+              <Link
+                key={href}
+                href={href}
+                aria-current={pathname === href ? "page" : undefined}
+                className={`text-[15px] font-bold whitespace-nowrap text-ink ${pathname === href ? "underline underline-offset-4" : "no-underline"}`}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
         </header>
 
         <main className="min-w-0 flex-1 px-5 pt-6 pb-16 wide:px-12 wide:pt-10 wide:pb-24">
