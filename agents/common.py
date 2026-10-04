@@ -1,0 +1,28 @@
+"""Shared setup for every agent: load the root .env, fix certificates, build the Agent."""
+import os
+from pathlib import Path
+
+import certifi
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+# python.org builds of Python on macOS ship without root certificates
+os.environ.setdefault("SSL_CERT_FILE", certifi.where())
+
+from uagents import Agent, Context  # noqa: E402  (needs .env and SSL_CERT_FILE set first)
+
+
+def make_agent(prefix: str, name: str) -> Agent:
+    """One fixed seed and one port per agent, both from the environment."""
+    agent = Agent(
+        name=name,
+        seed=os.environ[f"{prefix}_AGENT_SEED"],
+        port=int(os.environ[f"{prefix}_AGENT_PORT"]),
+        mailbox=True,
+    )
+
+    @agent.on_event("startup")
+    async def announce(ctx: Context):
+        ctx.logger.info(f"{name} address: {agent.address}")
+
+    return agent

@@ -16,11 +16,15 @@ export type Label = "real_signal" | "polite" | "neutral";
 export type Verdict = "keep_going" | "narrow_down" | "try_new_angle" | "pivot";
 
 /**
- * The analyzer's request and response. The single source of truth: TypeScript types and Pydantic models are generated from this file.
+ * The analyzer's requests and responses. The single source of truth: TypeScript types and Pydantic models are generated from this file.
  */
 export interface AnalyzeContract {
   request: AnalyzeRequest;
   response: AnalyzeResponse;
+  transcribe_response: TranscribeResponse;
+  judge_response: JudgeResponse;
+  write_request: WriteRequest;
+  write_response: WriteResponse;
 }
 /**
  * JSON body of POST /analyze. For audio, send multipart/form-data instead with the fields `idea` and `file`.
@@ -76,4 +80,52 @@ export interface Sentence {
    * Confidence in the label, 0 to 1. Null when label is null.
    */
   confidence: number | null;
+}
+/**
+ * Response of POST /transcribe (multipart/form-data with an audio `file`).
+ *
+ * This interface was referenced by `AnalyzeContract`'s JSON-Schema
+ * via the `definition` "TranscribeResponse".
+ */
+export interface TranscribeResponse {
+  /**
+   * One `speaker: words` turn per line.
+   */
+  transcript: string;
+}
+/**
+ * Response of POST /judge, whose body is an AnalyzeRequest: the judged sentences, the score and the verdict, before any text is written.
+ *
+ * This interface was referenced by `AnalyzeContract`'s JSON-Schema
+ * via the `definition` "JudgeResponse".
+ */
+export interface JudgeResponse {
+  /**
+   * The transcript that was analyzed (produced by transcription when audio was sent).
+   */
+  transcript: string;
+  sentences: Sentence[];
+  /**
+   * Demand score, computed in Python.
+   */
+  score: number;
+  verdict: Verdict;
+}
+/**
+ * Body of POST /write: the idea plus a JudgeResponse.
+ *
+ * This interface was referenced by `AnalyzeContract`'s JSON-Schema
+ * via the `definition` "WriteRequest".
+ */
+export interface WriteRequest {
+  idea: string;
+  judged: JudgeResponse;
+}
+/**
+ * This interface was referenced by `AnalyzeContract`'s JSON-Schema
+ * via the `definition` "WriteResponse".
+ */
+export interface WriteResponse {
+  summary: string;
+  next_steps: string[];
 }

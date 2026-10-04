@@ -1,7 +1,7 @@
 """The analysis pipeline: split -> judge (Jev) -> score (Python) -> verdict (Jev) -> write (OpenAI)."""
 from dataclasses import dataclass
 
-from app.contracts import AnalyzeResponse, Sentence
+from app.contracts import AnalyzeResponse, JudgeResponse, Sentence, WriteResponse
 from app.pipeline.jev import Judge
 from app.pipeline.scoring import compute_score
 from app.pipeline.split import split_transcript
@@ -16,7 +16,8 @@ class Clients:
     writer: Writer
 
 
-def run_analysis(idea: str, transcript: str, clients: Clients) -> AnalyzeResponse:
+def judge(idea: str, transcript: str, clients: Clients) -> JudgeResponse:
+    """Split, label each interviewee sentence (Jev), score (Python), pick the verdict (Jev)."""
     drafts = split_transcript(transcript)
     to_judge = [d for d in drafts if d.is_interviewee]
     judgments = clients.judge.label_sentences(idea, transcript, [d.text for d in to_judge])
@@ -42,13 +43,16 @@ def run_analysis(idea: str, transcript: str, clients: Clients) -> AnalyzeRespons
 
     score = compute_score(sentences)
     verdict = clients.judge.pick_verdict(idea, sentences, score)
-    summary, next_steps = clients.writer.write(idea, sentences, score, verdict)
+    return JudgeResponse(transcript=transcript, sentences=sentences, score=score, verdict=verdict)
 
-    return AnalyzeResponse(
-        transcript=transcript,
-        sentences=sentences,
-        score=score,
-        verdict=verdict,
-        summary=summary,
-        next_steps=next_steps,
-    )
+
+def write(idea: str, judged: JudgeResponse, clients: Clients) -> WriteResponse:
+    """Summary and next steps (OpenAI). Never changes a judgment."""
+    summary, next_steps = clients.writer.write(idea, judged.sentences, judged.score, judged.verdict)
+    return WriteResponse(summary=summary, next_steps=next_steps)
+
+
+def run_analysis(idea: str, transcript: str, clients: Clients) -> AnalyzeResponse:
+    judged = judge(idea, transcript, clients)
+    written = write(idea, judged, clients)
+    return AnalyzeResponse(**judged.model_dump(), **written.model_dump())

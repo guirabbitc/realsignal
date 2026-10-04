@@ -1,21 +1,35 @@
-"""Local smoke test: a fake client says "hi" to the front agent's chat protocol.
+"""Local smoke test of the whole agent path, with no Agentverse account and no paid calls.
 
-Runs both agents in one process, so no mailbox or Agentverse account is needed.
+Starts the analyzer with fake AI clients, runs the front agent (and the specialists) in one
+process, and plays a founder: sends the idea, then a fixture transcript, and expects a verdict.
+
+    uv run --project agents python agents/tests/smoke_chat.py direct
+    uv run --project agents python agents/tests/smoke_chat.py specialists
+
 File uploads are not covered here; test those in ASI:One.
 """
 import os
+import subprocess
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 
-import certifi
+import httpx
 
-# python.org builds of Python on macOS ship without root certificates
-os.environ.setdefault("SSL_CERT_FILE", certifi.where())
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "front"))
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "agents"))
 
-from chat_proto import chat_proto  # noqa: E402
+MODE = sys.argv[1] if len(sys.argv) > 1 else "direct"
+ANALYZER_PORT = 8765
+os.environ["ANALYZER_URL"] = f"http://127.0.0.1:{ANALYZER_PORT}"
+os.environ["ANALYZER_SECRET"] = "smoke-secret"
+os.environ["FRONT_USE_SPECIALISTS"] = "1" if MODE == "specialists" else "0"
+
+import common  # noqa: E402,F401  (certificates; .env does not override the values above)
+from front.chat_proto import chat_proto  # noqa: E402
+from specialists import analyst_proto, intake_proto, strategist_proto  # noqa: E402
 from uagents import Agent, Bureau, Context, Protocol  # noqa: E402
 from uagents_core.contrib.protocols.chat import (  # noqa: E402
     ChatAcknowledgement,
@@ -25,47 +39,81 @@ from uagents_core.contrib.protocols.chat import (  # noqa: E402
     chat_protocol_spec,
 )
 
+IDEA = "idea: An app that plans a week of dinners and orders the groceries."
+TRANSCRIPT = (ROOT / "services/analyzer/fixtures/real_pain.txt").read_text()
+
 front = Agent(name="front-smoke", seed="realsignal-smoke-front")
 front.include(chat_proto)
+
+specialists = []
+for prefix, proto in (("INTAKE", intake_proto), ("ANALYST", analyst_proto), ("STRATEGIST", strategist_proto)):
+    agent = Agent(name=f"{prefix.lower()}-smoke", seed=f"realsignal-smoke-{prefix.lower()}")
+    agent.include(proto)
+    os.environ[f"{prefix}_AGENT_ADDRESS"] = agent.address
+    specialists.append(agent)
 
 client = Agent(name="client-smoke", seed="realsignal-smoke-client")
 client_proto = Protocol(spec=chat_protocol_spec)
 
 
+def chat(*content) -> ChatMessage:
+    return ChatMessage(timestamp=datetime.utcnow(), msg_id=uuid4(), content=list(content))
+
+
+def finish(code: int) -> None:
+    analyzer.terminate()
+    os._exit(code)
+
+
 @client.on_event("startup")
-async def say_hi(ctx: Context):
-    await ctx.send(
-        front.address,
-        ChatMessage(
-            timestamp=datetime.utcnow(),
-            msg_id=uuid4(),
-            content=[
-                StartSessionContent(type="start-session"),
-                TextContent(type="text", text="hi"),
-            ],
-        ),
-    )
+async def send_idea(ctx: Context):
+    await ctx.send(front.address, chat(StartSessionContent(type="start-session"), TextContent(type="text", text=IDEA)))
 
 
 @client_proto.on_message(ChatMessage)
 async def on_reply(ctx: Context, sender: str, msg: ChatMessage):
     for item in msg.content:
-        if isinstance(item, TextContent):
-            print(f"REPLY: {item.text}", flush=True)
-            os._exit(0 if "You said" in item.text else 1)
+        if not isinstance(item, TextContent):
+            continue
+        print(f"REPLY:\n{item.text}\n", flush=True)
+        if "Idea saved" in item.text:
+            await ctx.send(front.address, chat(TextContent(type="text", text=TRANSCRIPT)))
+        elif "Verdict" in item.text:
+            print(f"PASS ({MODE})", flush=True)
+            finish(0)
         else:
-            print(f"GOT: {item}", flush=True)
+            print(f"FAIL ({MODE})", flush=True)
+            finish(1)
 
 
 @client_proto.on_message(ChatAcknowledgement)
 async def on_ack(ctx: Context, sender: str, msg: ChatAcknowledgement):
-    print("ACK received", flush=True)
+    pass
 
 
 client.include(client_proto)
 
+
+def start_analyzer() -> subprocess.Popen:
+    env = {**os.environ, "ANALYZER_FAKE_CLIENTS": "1"}
+    process = subprocess.Popen(
+        ["uv", "run", "--quiet", "uvicorn", "app.main:app", "--port", str(ANALYZER_PORT), "--log-level", "warning"],
+        cwd=ROOT / "services/analyzer",
+        env=env,
+    )
+    for _ in range(60):
+        try:
+            if httpx.get(f"{os.environ['ANALYZER_URL']}/health", timeout=1).status_code == 200:
+                return process
+        except httpx.HTTPError:
+            time.sleep(0.5)
+    process.terminate()
+    raise SystemExit("Analyzer did not start")
+
+
 if __name__ == "__main__":
+    analyzer = start_analyzer()
     bureau = Bureau(port=8099)
-    bureau.add(front)
-    bureau.add(client)
+    for agent in (front, *specialists, client):
+        bureau.add(agent)
     bureau.run()

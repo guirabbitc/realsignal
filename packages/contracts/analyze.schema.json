@@ -2,44 +2,109 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://realsignal.dev/contracts/analyze.schema.json",
   "title": "AnalyzeContract",
-  "description": "The analyzer's request and response. The single source of truth: TypeScript types and Pydantic models are generated from this file.",
+  "description": "The analyzer's requests and responses. The single source of truth: TypeScript types and Pydantic models are generated from this file.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["request", "response"],
+  "required": [
+    "request",
+    "response",
+    "transcribe_response",
+    "judge_response",
+    "write_request",
+    "write_response"
+  ],
   "properties": {
-    "request": { "$ref": "#/$defs/AnalyzeRequest" },
-    "response": { "$ref": "#/$defs/AnalyzeResponse" }
+    "request": {
+      "$ref": "#/$defs/AnalyzeRequest"
+    },
+    "response": {
+      "$ref": "#/$defs/AnalyzeResponse"
+    },
+    "transcribe_response": {
+      "$ref": "#/$defs/TranscribeResponse"
+    },
+    "judge_response": {
+      "$ref": "#/$defs/JudgeResponse"
+    },
+    "write_request": {
+      "$ref": "#/$defs/WriteRequest"
+    },
+    "write_response": {
+      "$ref": "#/$defs/WriteResponse"
+    }
   },
   "$defs": {
     "Label": {
       "title": "Label",
       "description": "How one interviewee sentence reads as evidence of demand.",
       "type": "string",
-      "enum": ["real_signal", "polite", "neutral"]
+      "enum": [
+        "real_signal",
+        "polite",
+        "neutral"
+      ]
     },
     "Verdict": {
       "title": "Verdict",
       "description": "What the founder should do after this interview.",
       "type": "string",
-      "enum": ["keep_going", "narrow_down", "try_new_angle", "pivot"]
+      "enum": [
+        "keep_going",
+        "narrow_down",
+        "try_new_angle",
+        "pivot"
+      ]
     },
     "Sentence": {
       "title": "Sentence",
       "type": "object",
       "additionalProperties": false,
-      "required": ["order", "speaker", "text", "is_interviewee", "label", "confidence"],
+      "required": [
+        "order",
+        "speaker",
+        "text",
+        "is_interviewee",
+        "label",
+        "confidence"
+      ],
       "properties": {
-        "order": { "type": "integer", "minimum": 0, "description": "Position in the transcript, starting at 0." },
-        "speaker": { "type": "string" },
-        "text": { "type": "string" },
-        "is_interviewee": { "type": "boolean" },
+        "order": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Position in the transcript, starting at 0."
+        },
+        "speaker": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "is_interviewee": {
+          "type": "boolean"
+        },
         "label": {
           "description": "Null for interviewer sentences, which are not judged.",
-          "anyOf": [{ "$ref": "#/$defs/Label" }, { "type": "null" }]
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Label"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "confidence": {
           "description": "Confidence in the label, 0 to 1. Null when label is null.",
-          "anyOf": [{ "type": "number", "minimum": 0, "maximum": 1 }, { "type": "null" }]
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },
@@ -48,24 +113,151 @@
       "description": "JSON body of POST /analyze. For audio, send multipart/form-data instead with the fields `idea` and `file`.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["idea", "transcript"],
+      "required": [
+        "idea",
+        "transcript"
+      ],
       "properties": {
-        "idea": { "type": "string", "minLength": 1, "description": "The idea this interview tests." },
-        "transcript": { "type": "string", "minLength": 1, "description": "Interview text, one `Speaker: words` turn per line." }
+        "idea": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The idea this interview tests."
+        },
+        "transcript": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Interview text, one `Speaker: words` turn per line."
+        }
       }
     },
     "AnalyzeResponse": {
       "title": "AnalyzeResponse",
       "type": "object",
       "additionalProperties": false,
-      "required": ["transcript", "sentences", "score", "verdict", "summary", "next_steps"],
+      "required": [
+        "transcript",
+        "sentences",
+        "score",
+        "verdict",
+        "summary",
+        "next_steps"
+      ],
       "properties": {
-        "transcript": { "type": "string", "description": "The transcript that was analyzed (produced by transcription when audio was sent)." },
-        "sentences": { "type": "array", "items": { "$ref": "#/$defs/Sentence" } },
-        "score": { "type": "number", "minimum": 0, "maximum": 100, "description": "Demand score, computed in Python." },
-        "verdict": { "$ref": "#/$defs/Verdict" },
-        "summary": { "type": "string" },
-        "next_steps": { "type": "array", "items": { "type": "string" } }
+        "transcript": {
+          "type": "string",
+          "description": "The transcript that was analyzed (produced by transcription when audio was sent)."
+        },
+        "sentences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Sentence"
+          }
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Demand score, computed in Python."
+        },
+        "verdict": {
+          "$ref": "#/$defs/Verdict"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "next_steps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "TranscribeResponse": {
+      "title": "TranscribeResponse",
+      "description": "Response of POST /transcribe (multipart/form-data with an audio `file`).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transcript"
+      ],
+      "properties": {
+        "transcript": {
+          "type": "string",
+          "description": "One `speaker: words` turn per line."
+        }
+      }
+    },
+    "JudgeResponse": {
+      "title": "JudgeResponse",
+      "description": "Response of POST /judge, whose body is an AnalyzeRequest: the judged sentences, the score and the verdict, before any text is written.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transcript",
+        "sentences",
+        "score",
+        "verdict"
+      ],
+      "properties": {
+        "transcript": {
+          "type": "string",
+          "description": "The transcript that was analyzed (produced by transcription when audio was sent)."
+        },
+        "sentences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Sentence"
+          }
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Demand score, computed in Python."
+        },
+        "verdict": {
+          "$ref": "#/$defs/Verdict"
+        }
+      }
+    },
+    "WriteRequest": {
+      "title": "WriteRequest",
+      "description": "Body of POST /write: the idea plus a JudgeResponse.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "idea",
+        "judged"
+      ],
+      "properties": {
+        "idea": {
+          "type": "string",
+          "minLength": 1
+        },
+        "judged": {
+          "$ref": "#/$defs/JudgeResponse"
+        }
+      }
+    },
+    "WriteResponse": {
+      "title": "WriteResponse",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary",
+        "next_steps"
+      ],
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "next_steps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     }
   }

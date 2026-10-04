@@ -13,8 +13,15 @@ load_dotenv(find_dotenv())
 # python.org builds of Python on macOS ship without root certificates
 os.environ.setdefault("SSL_CERT_FILE", certifi.where())
 
-from app.contracts import AnalyzeRequest, AnalyzeResponse  # noqa: E402
-from app.pipeline import Clients, run_analysis  # noqa: E402
+from app.contracts import (  # noqa: E402
+    AnalyzeRequest,
+    AnalyzeResponse,
+    JudgeResponse,
+    TranscribeResponse,
+    WriteRequest,
+    WriteResponse,
+)
+from app.pipeline import Clients, judge, run_analysis, write  # noqa: E402
 from app.pipeline.jev import JEV_BASE_URL, JEV_MODEL, FakeJudge, JevJudge  # noqa: E402
 from app.pipeline.transcribe import ElevenLabsTranscriber, FakeTranscriber  # noqa: E402
 from app.pipeline.writer import OPENAI_MODEL, FakeWriter, OpenAIWriter  # noqa: E402
@@ -67,6 +74,12 @@ def health() -> dict[str, str]:
     return {"status": "ok", "mode": "fake" if fake_mode() else "live"}
 
 
+async def _transcribe_upload(file, clients: Clients) -> str:
+    return clients.transcriber.transcribe(
+        await file.read(), file.filename or "audio", file.content_type or "application/octet-stream"
+    )
+
+
 @app.post("/analyze", response_model=AnalyzeResponse, dependencies=[Depends(require_key)])
 async def analyze(request: Request, clients: Clients = Depends(get_clients)) -> AnalyzeResponse:
     """JSON body (AnalyzeRequest), or multipart/form-data with `idea` and an audio `file`."""
@@ -77,9 +90,7 @@ async def analyze(request: Request, clients: Clients = Depends(get_clients)) -> 
         file = form.get("file")
         if not idea or file is None or isinstance(file, str):
             raise HTTPException(status_code=422, detail="multipart needs `idea` and `file`")
-        transcript = clients.transcriber.transcribe(
-            await file.read(), file.filename or "audio", file.content_type or "application/octet-stream"
-        )
+        transcript = await _transcribe_upload(file, clients)
     else:
         try:
             body = AnalyzeRequest.model_validate(await request.json())
@@ -88,3 +99,26 @@ async def analyze(request: Request, clients: Clients = Depends(get_clients)) -> 
         idea, transcript = body.idea, body.transcript
 
     return run_analysis(idea, transcript, clients)
+
+
+# The three stages of /analyze, exposed one by one for the specialist agents.
+# They run the same pipeline functions, so both paths give the same result.
+
+
+@app.post("/transcribe", response_model=TranscribeResponse, dependencies=[Depends(require_key)])
+async def transcribe_stage(request: Request, clients: Clients = Depends(get_clients)) -> TranscribeResponse:
+    form = await request.form()
+    file = form.get("file")
+    if file is None or isinstance(file, str):
+        raise HTTPException(status_code=422, detail="multipart needs `file`")
+    return TranscribeResponse(transcript=await _transcribe_upload(file, clients))
+
+
+@app.post("/judge", response_model=JudgeResponse, dependencies=[Depends(require_key)])
+def judge_stage(body: AnalyzeRequest, clients: Clients = Depends(get_clients)) -> JudgeResponse:
+    return judge(body.idea, body.transcript, clients)
+
+
+@app.post("/write", response_model=WriteResponse, dependencies=[Depends(require_key)])
+def write_stage(body: WriteRequest, clients: Clients = Depends(get_clients)) -> WriteResponse:
+    return write(body.idea, body.judged, clients)

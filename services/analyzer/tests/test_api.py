@@ -56,3 +56,29 @@ def test_analyze_accepts_audio_as_multipart(client):
     )
     assert response.status_code == 200
     assert response.json()["transcript"].startswith("speaker_0:")
+
+
+def test_stage_endpoints_require_the_key(client):
+    assert client.post("/judge", json={"idea": IDEA, "transcript": "A: hi"}).status_code == 401
+    assert client.post("/write", json={}).status_code == 401
+    assert client.post("/transcribe", files={"file": ("a.mp3", b"x", "audio/mpeg")}).status_code == 401
+
+
+def test_stages_chained_equal_analyze(client, schema):
+    request = {"idea": IDEA, "transcript": fixture_text("real_pain")}
+    whole = client.post("/analyze", json=request, headers=AUTH).json()
+
+    judged = client.post("/judge", json=request, headers=AUTH)
+    assert judged.status_code == 200
+    written = client.post("/write", json={"idea": IDEA, "judged": judged.json()}, headers=AUTH)
+    assert written.status_code == 200
+    assert {**judged.json(), **written.json()} == whole
+
+    for name, body in (("JudgeResponse", judged.json()), ("WriteResponse", written.json())):
+        validator = Draft202012Validator({**schema["$defs"][name], "$defs": schema["$defs"]})
+        assert list(validator.iter_errors(body)) == []
+
+
+def test_transcribe_stage_returns_transcript(client):
+    response = client.post("/transcribe", files={"file": ("a.mp3", b"x", "audio/mpeg")}, headers=AUTH)
+    assert response.status_code == 200 and response.json()["transcript"].startswith("speaker_0:")

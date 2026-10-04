@@ -12,6 +12,7 @@ const schema = join(root, "packages/contracts/analyze.schema.json");
 const targets = {
   ts: join(root, "apps/web/lib/contracts/analyze.ts"),
   py: join(root, "services/analyzer/app/contracts.py"),
+  agents: join(root, "agents/contracts.py"),
 };
 const banner =
   "GENERATED from packages/contracts/analyze.schema.json. Do not edit: run `pnpm contracts:generate`.";
@@ -49,11 +50,12 @@ function generatePy(out) {
 const check = process.argv.includes("--check");
 const dir = check ? mkdtempSync(join(tmpdir(), "contracts-")) : null;
 const out = check
-  ? { ts: join(dir, "analyze.ts"), py: join(dir, "contracts.py") }
+  ? { ts: join(dir, "analyze.ts"), py: join(dir, "contracts.py"), agents: join(dir, "agents_contracts.py") }
   : targets;
 
 await generateTs(out.ts);
 generatePy(out.py);
+generatePy(out.agents);
 
 if (check) {
   const drifted = Object.keys(targets).filter(
