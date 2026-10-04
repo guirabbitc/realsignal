@@ -38,13 +38,12 @@ Dropped from the hackathon plan for now: the Market Check agent, cross-interview
 | Database | Done | `docker compose up`, `pnpm db:migrate` on an empty database: 5 tables |
 | Web app | Done | Build and typecheck pass. Fixture upload goes `processing` → `done` and the result page shows sentences, score and verdict. With the analyzer stopped, the row goes `failed` with the error. |
 | Front agent | Done, works in ASI:One (fake mode) | Smoke test in `direct` mode; manual test in ASI:One on 2026-10-04 |
-| Specialist agents | Done locally | Smoke test in `specialists` mode gives the same result as `direct` |
+| Specialist agents | Done, work in ASI:One | Smoke test in `specialists` mode; on 2026-10-04 Murilo got a reply through four separate agent processes over Agentverse mailboxes ("Handled by the ValiDate team") |
 
 **Not verified yet:**
 
 - **Live transcription.** There is no ElevenLabs key yet, so audio has never been transcribed. Without the key the analyzer still handles transcripts and refuses audio with a clear error.
 - **ASI:One, partly.** Verified by Murilo on 2026-10-04 with the front agent in direct mode and the analyzer in fake mode: the mailbox is connected, the guided conversation works, and a transcript returns a verdict (real-pain fixture: keep going; polite fixture: pivot). Audio upload is untested.
-- **Agents over the network.** The specialists were chained inside one process. Four separate processes talking through Agentverse are untested.
 - **Railway.** No deployment config exists.
 
 ## Decisions worth knowing
@@ -62,7 +61,6 @@ Dropped from the hackathon plan for now: the Market Check agent, cross-interview
 
 1. Add `ELEVENLABS_API_KEY` and test one recording. Run each fixture three times to check the verdicts are stable. Consider tuning: one-word answers like "Yes." are judged on their own and get low-confidence labels.
 2. ASI:One: the front agent works there in fake mode. Repeat the check once the analyzer is live.
-3. Connect the three specialists, set `FRONT_USE_SPECIALISTS=1`, repeat.
 4. Decide audio storage and add auth.
 5. Railway: three services (web, analyzer, Postgres), analyzer on the private network.
 6. Before submission: make the repo public, record the demo video.
