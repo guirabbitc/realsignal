@@ -34,6 +34,7 @@ realsignal/
       tests/
   agents/                   uAgents for ASI:One; they call the analyzer (hackathon) (uv)
     front/                  agent.py, chat_proto.py (Chat Protocol), flow.py (plans and calls)
+    */README.md             each agent's Agentverse profile, published on mailbox connect
     intake/ analyst/ strategist/   thin specialists, one analyzer stage each
     specialists.py          the three specialist protocols
     analyzer_client.py      the only place agents call the analyzer

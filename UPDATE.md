@@ -67,6 +67,7 @@ Dropped from the hackathon plan for now: the Market Check agent, cross-interview
 
 ## Changelog
 
+- **2026-10-04** Each agent has a `README.md` and a short description next to its `agent.py`. uagents publishes them to Agentverse when the agent's mailbox is connected through the inspector, so edit those files, not the Agentverse page.
 - **2026-10-04** PDF transcripts: ASI:One only lets a founder attach PDFs, so the analyzer now reads PDF and text uploads itself (`transcribe.py`, `file_to_transcript`) and only sends real recordings to ElevenLabs. Agents pass a PDF through unchanged; one sent before the idea is kept. PDF versions of the fixtures are in `services/analyzer/fixtures/`. Known nit: the web app stores a PDF upload with `source = audio`. Not yet confirmed in ASI:One: its own upload step was failing before the file reached our agent.
 - **2026-10-04** Multi-agent path made demo-ready: `agents/run_team.py` starts all four agents in one terminal; a reply that went through the specialists ends with a "Handled by the ValiDate team" line; if a specialist does not answer within 45 s the front agent falls back to `/analyze`.
 - **2026-10-04** Writer model changed to `gpt-4.1-nano` to keep testing cheap (about $0.00014 per analysis, measured). `gpt-5-nano` has a lower list price but its reasoning tokens made it about 5x more expensive and 12 s slow. Set `OPENAI_MODEL` to override.

@@ -12,13 +12,19 @@ os.environ.setdefault("SSL_CERT_FILE", certifi.where())
 from uagents import Agent, Context  # noqa: E402  (needs .env and SSL_CERT_FILE set first)
 
 
-def make_agent(prefix: str, name: str) -> Agent:
-    """One fixed seed and one port per agent, both from the environment."""
+def make_agent(prefix: str, name: str, description: str) -> Agent:
+    """One fixed seed and one port per agent, both from the environment.
+
+    The description and the README.md next to the agent's file are published to Agentverse
+    when the mailbox is connected through the inspector.
+    """
     agent = Agent(
         name=name,
         seed=os.environ[f"{prefix}_AGENT_SEED"],
         port=int(os.environ[f"{prefix}_AGENT_PORT"]),
         mailbox=True,
+        description=description,
+        readme_path=str(Path(__file__).resolve().parent / prefix.lower() / "README.md"),
     )
 
     @agent.on_event("startup")
