@@ -10,8 +10,20 @@ Working plan and status for the `worktree-audio-input` branch. A fresh session r
 | 1. Analyzer `POST /transcribe` | **done** | ruff pass, pytest 84/84. The Scribe response in `tests/recordings/audio/synthetic.scribe.json` is **synthetic** (docs shape) until a real recording exists |
 | 2. Contract and web API | **done** | lint, typecheck, Vitest 49/49, pytest 91/91. `/api/transcribe` streams a heartbeat (Q-B adopted) |
 | 3. UI | **done** | lint, typecheck, Vitest 55/55; Playwright: record journey + real text journey pass with the flag on, text journey passes with it off; 22 screens in `docs/features/audio-input/screens/`; no `ELEVENLABS`/`xi-api-key` in the build output |
-| 4. Real round trip | **blocked** | Needs `ELEVENLABS_API_KEY` and the team-recorded audio (`real_pain.m4a`, `polite.m4a`) |
-| 5. Ship (draft PR) | — | |
+| 4. Real round trip | **blocked, partly run** | Text fixtures through the real analyzer: polite 0 `pivot`, mixed 59 `narrow_down`, real_pain 97 `keep_going` (order holds, all in band). The audio round trip needs `ELEVENLABS_API_KEY` and the team-recorded audio |
+| 5. Ship (draft PR) | **done** | Two stacked draft PRs (API behind the flag, then UI). Not merged |
+
+### To finish Phase 4
+
+1. Put `ELEVENLABS_API_KEY` in `services/analyzer/.env` (this worktree).
+2. Put the team recordings in `services/analyzer/tests/recordings/audio/`: `real_pain.m4a`, `polite.m4a`, and `real_pain.wav` for the fake mic.
+3. Record a real Scribe response once from `real_pain.m4a` and commit it next to the synthetic one (minified). Point the cross-check (`example.transcribe.json` / `example.transcript.txt`) at it.
+4. Run, with the analyzer on 8100:
+   ```bash
+   E2E_REAL=1 pnpm --filter web e2e upload-audio-real
+   E2E_REAL=1 E2E_FAKE_AUDIO=$PWD/services/analyzer/tests/recordings/audio/real_pain.wav pnpm --filter web e2e record-journey
+   ```
+   The upload spec prints transcription time, the built transcript and score/verdict per fixture. Compare the transcript with the `.txt`, and never loosen a band.
 
 ### Environment (this worktree only)
 
@@ -24,8 +36,8 @@ Working plan and status for the `worktree-audio-input` branch. A fresh session r
 Run side by side with main:
 
 ```bash
-pnpm --filter web dev --port 3100
-cd services/analyzer && uv run uvicorn app.main:app --host :: --port 8100
+AUDIO_INPUT_ENABLED=true pnpm --filter web dev --port 3100
+cd services/analyzer && uv run --env-file .env uvicorn app.main:app --host :: --port 8100
 ```
 
 ### Baseline (Phase 0, before any change)
