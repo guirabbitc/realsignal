@@ -1,0 +1,28 @@
+[
+  {
+    "id": "sample/case-01",
+    "persona": "committed_buyer",
+    "difficulty": "easy",
+    "expected_verdict": "keep_going",
+    "verdict": "keep_going",
+    "score": 93.2,
+    "labels_total": 8,
+    "labels_right": 8,
+    "unmatched": 0,
+    "disagreements": [],
+    "error": null
+  },
+  {
+    "id": "sample/case-02",
+    "persona": "polite_enthusiast",
+    "difficulty": "easy",
+    "expected_verdict": "pivot",
+    "verdict": "pivot",
+    "score": 0.0,
+    "labels_total": 9,
+    "labels_right": 9,
+    "unmatched": 0,
+    "disagreements": [],
+    "error": null
+  }
+]

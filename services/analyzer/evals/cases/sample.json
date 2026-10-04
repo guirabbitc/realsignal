@@ -1,0 +1,41 @@
+[
+  {
+    "id": "case-01",
+    "idea": "A tool that turns receipts into expense reports for freelancers.",
+    "persona": "committed_buyer",
+    "difficulty": "easy",
+    "expected_verdict": "keep_going",
+    "why": "Lena describes money and time already lost, a paid tool she cancelled, and commits to paying and to a date.",
+    "transcript": "Interviewer: We're building a tool that turns receipts into expense reports. How do you handle expenses today?\nLena: Every month I spend a full Saturday typing receipts into a spreadsheet.\nLena: Last quarter I missed 400 dollars in deductions because I lost receipts.\nInterviewer: Have you tried anything else?\nLena: I paid 15 dollars a month for an expense app for six months.\nLena: I cancelled it because it could not read handwritten receipts.\nLena: I work mostly with small design studios.\nInterviewer: We have a beta. Would you want to try it?\nLena: I will pay for a year upfront if it reads handwritten receipts.\nLena: Send me the link today.\nLena: I already put Friday at 10 on my calendar to move my receipts over.",
+    "interviewee_sentences": [
+      {"text": "Every month I spend a full Saturday typing receipts into a spreadsheet.", "label": "real_signal"},
+      {"text": "Last quarter I missed 400 dollars in deductions because I lost receipts.", "label": "real_signal"},
+      {"text": "I paid 15 dollars a month for an expense app for six months.", "label": "real_signal"},
+      {"text": "I cancelled it because it could not read handwritten receipts.", "label": "real_signal"},
+      {"text": "I work mostly with small design studios.", "label": "neutral"},
+      {"text": "I will pay for a year upfront if it reads handwritten receipts.", "label": "real_signal"},
+      {"text": "Send me the link today.", "label": "real_signal"},
+      {"text": "I already put Friday at 10 on my calendar to move my receipts over.", "label": "real_signal"}
+    ]
+  },
+  {
+    "id": "case-02",
+    "idea": "A browser extension that summarizes long email threads for managers.",
+    "persona": "polite_enthusiast",
+    "difficulty": "easy",
+    "expected_verdict": "pivot",
+    "why": "Marcus is warm and encouraging but reports no problem, no past behavior and no commitment.",
+    "transcript": "Interviewer: We're building an extension that summarizes long email threads. How do you deal with them today?\nMarcus: I just skim them.\nMarcus: I manage a team of six.\nInterviewer: Does skimming ever cause problems?\nMarcus: Not that I can think of.\nInterviewer: What do you think of the idea?\nMarcus: That is a neat idea.\nMarcus: I think a lot of people would like that.\nMarcus: I would probably use it if it was free.\nInterviewer: Would your team use it?\nMarcus: I am sure they would love it.\nMarcus: You should definitely build it.\nInterviewer: Could we follow up next month?\nMarcus: Sure, maybe.",
+    "interviewee_sentences": [
+      {"text": "I just skim them.", "label": "neutral"},
+      {"text": "I manage a team of six.", "label": "neutral"},
+      {"text": "Not that I can think of.", "label": "neutral"},
+      {"text": "That is a neat idea.", "label": "polite"},
+      {"text": "I think a lot of people would like that.", "label": "polite"},
+      {"text": "I would probably use it if it was free.", "label": "polite"},
+      {"text": "I am sure they would love it.", "label": "polite"},
+      {"text": "You should definitely build it.", "label": "polite"},
+      {"text": "Sure, maybe.", "label": "polite"}
+    ]
+  }
+]

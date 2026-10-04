@@ -1,0 +1,15 @@
+
+=== Cases ===
+  ok   sample/case-01               expected keep_going     got keep_going     score  93.2  labels 8/8 (100%)
+  ok   sample/case-02               expected pivot          got pivot          score   0.0  labels 9/9 (100%)
+
+=== Accuracy ===
+  Verdict: 2/2 (100%)
+  Labels:  17/17 (100%)
+
+By persona:
+  committed_buyer            verdict 1/1 (100%)     labels 8/8 (100%)
+  polite_enthusiast          verdict 1/1 (100%)     labels 9/9 (100%)
+
+By difficulty:
+  easy                       verdict 2/2 (100%)     labels 17/17 (100%)

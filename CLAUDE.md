@@ -31,6 +31,7 @@ realsignal/
       app/contracts.py      GENERATED Pydantic models
       app/pipeline/         transcribe.py, split.py, jev.py, scoring.py, writer.py
       fixtures/             mock interviews
+      evals/                run.py (accuracy against an answer key), cases/*.json, generate_cases_prompt.md
       tests/
   agents/                   uAgents for ASI:One; they call the analyzer (hackathon) (uv)
     front/                  agent.py, chat_proto.py, flow.py (plans the steps and calls the team)
@@ -93,6 +94,7 @@ pnpm db:generate                            # after editing apps/web/lib/db/sche
 pnpm dev:web                                # http://localhost:3000
 cd services/analyzer && uv run uvicorn app.main:app --port 8000
 cd services/analyzer && uv run pytest
+cd services/analyzer && uv run python -m evals.run     # accuracy on evals/cases/*.json (real Jev; --fake is free)
 pnpm contracts:generate                     # after editing analyze.schema.json
 pnpm contracts:check                        # fails if generated files drifted
 pnpm -r build && pnpm typecheck
