@@ -1,0 +1,72 @@
+{
+  "duration_s": 18.9,
+  "language_code": "eng",
+  "model": "scribe_v2",
+  "speakers": [
+    {
+      "id": "speaker_0",
+      "turns": 4,
+      "words": 31,
+      "seconds": 10.1,
+      "sample": [
+        "Hey, thanks for coming in.",
+        "Honestly it's a mess. I pay someone $300 a month to do it by hand."
+      ]
+    },
+    {
+      "id": "speaker_1",
+      "turns": 3,
+      "words": 21,
+      "seconds": 6.1,
+      "sample": [
+        "Thanks for having me. How do you handle reservations today?",
+        "When did that last go wrong?"
+      ]
+    }
+  ],
+  "turns": [
+    {
+      "speaker_id": "speaker_0",
+      "text": "Hey, thanks for coming in.",
+      "start": 0.4,
+      "end": 1.85
+    },
+    {
+      "speaker_id": "speaker_1",
+      "text": "Thanks for having me. How do you handle reservations today?",
+      "start": 2.15,
+      "end": 5.1
+    },
+    {
+      "speaker_id": "speaker_0",
+      "text": "Honestly it's a mess. I pay someone $300 a month to do it by hand.",
+      "start": 5.4,
+      "end": 10.8
+    },
+    {
+      "speaker_id": "speaker_1",
+      "text": "When did that last go wrong?",
+      "start": 11.1,
+      "end": 12.85
+    },
+    {
+      "speaker_id": "speaker_0",
+      "text": "Last Friday. We double-booked six tables.",
+      "start": 13.15,
+      "end": 14.9
+    },
+    {
+      "speaker_id": "speaker_1",
+      "text": "What did that cost you?",
+      "start": 15.2,
+      "end": 16.65
+    },
+    {
+      "speaker_id": "speaker_0",
+      "text": "About $400 in comped meals.",
+      "start": 16.95,
+      "end": 18.4
+    }
+  ],
+  "suggested_founder_id": "speaker_1"
+}

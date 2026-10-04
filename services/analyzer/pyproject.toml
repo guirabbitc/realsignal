@@ -9,6 +9,7 @@ dependencies = [
     "openai>=3.24.0",
     "pydantic>=2",
     "pysbd>=0.3.4",
+    "python-multipart>=0.0.32",
     "typesafe-sdk>=0.7.2",
     "uvicorn[standard]>=0.54.0",
 ]

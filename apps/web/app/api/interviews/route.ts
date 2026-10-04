@@ -16,20 +16,25 @@ const createInterviewSchema = z.object({
   transcript: z.string().min(1).max(MAX_TRANSCRIPT_CHARS),
   kind: z.enum(["interview", "demo"]),
   interviewee_label: z.string().trim().max(200).nullish(),
+  // "audio": the founder confirmed a transcript built from a recording. The analysis is the same either way.
+  source: z.enum(["text", "audio"]).default("text"),
 });
 
 export async function POST(request: Request) {
   const parsed = createInterviewSchema.safeParse(await readJson(request));
-  if (!parsed.success) return invalid(`Send {idea_id, transcript (max ${MAX_TRANSCRIPT_CHARS} chars), kind, interviewee_label?}.`);
+  if (!parsed.success) {
+    return invalid(`Send {idea_id, transcript (max ${MAX_TRANSCRIPT_CHARS} chars), kind, interviewee_label?, source?}.`);
+  }
   const founderId = await getFounderId();
   if (!founderId) return notFound();
 
-  const { idea_id, transcript, kind, interviewee_label } = parsed.data;
+  const { idea_id, transcript, kind, interviewee_label, source } = parsed.data;
   const created = await createInterview(founderId, {
     ideaId: idea_id,
     transcript,
     kind,
     intervieweeLabel: interviewee_label ?? null,
+    source,
   });
   if (!created) return notFound();
 

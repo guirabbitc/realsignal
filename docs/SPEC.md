@@ -616,3 +616,17 @@ Each of those is an issue for the factory.
 | Consent at upload | a required checkbox: "The interviewee knew this was recorded" | team (PRD open question) |
 | Per-browser daily analysis cap | TBD | team (PRD open question) |
 | Where the agent runs during judging | a laptop that stays on, or a 4th Railway service | team |
+
+## 15. Audio input (record + upload), behind `AUDIO_INPUT_ENABLED`
+
+Added 2026-10-04. Working notes, risks and status: [`docs/features/audio-input.md`](features/audio-input.md).
+
+- **Shape:** audio → `POST /api/transcribe` (web) → analyzer `POST /transcribe` → ElevenLabs Scribe → voices and turns, **no roles** → the founder picks their own voice → the web app builds a `Founder:` / `Customer:` transcript → the founder can edit it → the existing `POST /api/interviews` with `source: "audio"` → `POST /analyze`, unchanged. `audio_url` stays `null`.
+- **Why two steps:** Scribe labels voices `speaker_0`, `speaker_1`, …. Only the founder knows which voice is theirs, and a wrong guess would judge their own pitch as customer evidence. Python suggests the voice with the most turns ending in "?" (tie: whoever spoke first). It is only a suggestion.
+- **Contract:** `packages/contracts/transcribe.schema.json` (request: multipart `file` + `num_speakers` 1–4, default 2). `analyze.schema.json` is unchanged.
+- **Scribe call:** `scribe_v2`, `diarize=true`, `num_speakers`, `tag_audio_events=false`, `language_code=en`, word timestamps, a fixed `seed`. Never `detect_speaker_roles`, `no_verbatim`, keyterms, entities, edits or webhooks. Turn text is Scribe's text with audio events dropped and whitespace collapsed. **No model rewrites it.**
+- **Limits and timeouts:** `AUDIO_MAX_MB` (100) checked in the browser, the web app and the analyzer → 413. Recording stops at `AUDIO_MAX_MINUTES` (60), at 64 kbit/s. The analyzer gives ElevenLabs one 270 s budget, with one retry on 429/5xx/timeout. The web → analyzer timeout is 285 s. `/api/transcribe` writes a whitespace byte every 15 s so Railway's 5-minute no-data cutoff never triggers, and returns the outcome in-band.
+- **Errors (analyzer):** 401 `bad_key`; 413 `audio_too_large`; 422 `invalid_request`, `empty_audio`, `no_speech`; 502/504 `transcription_failed` with `reason` ∈ `rate_limited`, `upstream_error`, `timeout`, `rejected`; 503 `transcription_not_configured`. Never an empty or partial transcript.
+- **Privacy:** the audio exists in one temp file per request, deleted in `finally`. It is never in the database, a bucket or a log, and the provider receives a neutral file name. Consent is required (400 `consent_required`) before any audio leaves the browser. Logs hold ids, byte sizes, durations, timings, model ids and codes.
+- **Ownership:** `/api/transcribe` runs the same checks as `POST /api/interviews`: session founder, owned `idea_id`, else 404.
+- **Env:** web `AUDIO_INPUT_ENABLED`, `AUDIO_MAX_MB`, `AUDIO_MAX_MINUTES`; analyzer `ELEVENLABS_API_KEY`, `ELEVENLABS_STT_MODEL`, `AUDIO_MAX_MB`.

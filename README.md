@@ -116,6 +116,32 @@ pnpm validate      # lint + typecheck + Vitest (web) + ruff + pytest (analyzer).
 
 `scripts/journey.py` is the end-to-end check. It calls the real Jev and OpenAI.
 
+Browser journeys (Playwright; needs Postgres, and the analyzer for the text journey):
+
+```bash
+pnpm --filter web exec playwright install chromium   # once
+AUDIO_INPUT_ENABLED=true  pnpm --filter web e2e      # record journey (fake mic) + text journey
+AUDIO_INPUT_ENABLED=false pnpm --filter web e2e      # the text journey must pass with audio off too
+E2E_REAL=1 pnpm --filter web e2e upload-audio-real   # real ElevenLabs + Jev + OpenAI; costs money
+E2E_SCREENS=1 pnpm --filter web e2e screens          # screenshots to docs/features/audio-input/screens/
+```
+
+## Audio input
+
+A founder can record an interview in the browser or upload a recording instead of pasting text. ElevenLabs Scribe
+transcribes it with speaker separation, the founder confirms which voice is theirs, and the result becomes a normal
+`Founder:` / `Customer:` transcript that goes through the same analysis as pasted text. Audio is never stored.
+
+It is off by default. To turn it on:
+
+1. Set `ELEVENLABS_API_KEY` in `services/analyzer/.env` (only the analyzer holds it).
+2. Set `AUDIO_INPUT_ENABLED=true` in `apps/web/.env`, and restart both services.
+3. Optional: `AUDIO_MAX_MB` (default 100, same value in both services), `AUDIO_MAX_MINUTES` (default 60, recording
+   limit), `ELEVENLABS_STT_MODEL` (default `scribe_v2`).
+
+With the flag off the upload form is text only and `POST /api/transcribe` answers 404. Design notes, risks and
+status: [`docs/features/audio-input.md`](docs/features/audio-input.md).
+
 ## Deploy
 
 Railway project `validate-ai`, with three services: `web`, `analyzer` (private network only) and `Postgres`. See [`docs/SPEC.md` §10](docs/SPEC.md).

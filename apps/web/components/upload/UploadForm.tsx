@@ -11,9 +11,23 @@ import { EXAMPLES, FEATURED_EXAMPLE_KEYS } from "@/lib/examples";
 
 const FEATURED = EXAMPLES.filter((e) => FEATURED_EXAMPLE_KEYS.includes(e.key));
 
+import { AudioInput, type AudioLimits } from "./AudioInput";
 import { detectSpeakers, guessRoles, MAX_TRANSCRIPT_CHARS, needsMapping, relabel, type Role, type Speaker } from "./checks";
 
 type Kind = "interview" | "demo";
+type Mode = "paste" | "file" | "record" | "audio";
+
+/** Server-side switches (lib/audio-config). With `enabled` false the form is exactly the text-only form. */
+export interface AudioSettings extends AudioLimits {
+  enabled: boolean;
+}
+
+const MODES: [Mode, string][] = [
+  ["paste", "Paste text"],
+  ["file", "Upload .txt"],
+  ["record", "Record"],
+  ["audio", "Upload audio"],
+];
 
 const KINDS: [Kind, string][] = [
   ["interview", "Customer interview"],
@@ -93,10 +107,12 @@ function sendErrorCopy(error: unknown): string {
   return "We couldn’t reach valiDate. Check your connection and try again.";
 }
 
-function Form({ idea }: { idea: IdeaDetail }) {
+function Form({ idea, audio }: { idea: IdeaDetail; audio: AudioSettings }) {
   const router = useRouter();
-  const [mode, setMode] = useState<"paste" | "file">("paste");
+  const [mode, setMode] = useState<Mode>("paste");
   const [text, setText] = useState("");
+  // "audio" while the box holds a transcript built from a recording, edits included.
+  const [source, setSource] = useState<"text" | "audio">("text");
   const [fileNote, setFileNote] = useState<string | null>(null);
   const [fileError, setFileError] = useState(false);
   const [kind, setKind] = useState<Kind>("interview");
@@ -111,7 +127,10 @@ function Form({ idea }: { idea: IdeaDetail }) {
 
   const hasText = text.trim().length > 0;
   const speakers = useMemo(() => detectSpeakers(text), [text]);
-  const mapping = speakers.length > 0 && needsMapping(speakers);
+  // An audio transcript is already labelled by the founder's own voice choice. When only one voice was heard it
+  // has no Customer: line, and it may still be sent: the read-out then asks for more evidence.
+  const mapping = source !== "audio" && speakers.length > 0 && needsMapping(speakers);
+  const audioMode = mode === "record" || mode === "audio";
   const roles = useMemo(() => ({ ...guessRoles(speakers), ...roleChoices }), [speakers, roleChoices]);
   const noCustomer = mapping && !speakers.some((s) => roles[s.key] === "customer");
   const unlabelled = tried && hasText && speakers.length === 0;
@@ -122,7 +141,8 @@ function Form({ idea }: { idea: IdeaDetail }) {
     setSending(true);
     setSendError(null);
     try {
-      const created = await apiPost<{ id: string }>("/api/interviews", { idea_id: idea.id, ...payload });
+      const body = { idea_id: idea.id, ...payload, ...(source === "audio" ? { source } : {}) };
+      const created = await apiPost<{ id: string }>("/api/interviews", body);
       router.push(`/interviews/${created.id}`);
     } catch (error) {
       setSending(false);
@@ -145,6 +165,7 @@ function Form({ idea }: { idea: IdeaDetail }) {
     if (!/\.txt$/i.test(file.name) && file.type !== "text/plain") return setFileError(true);
     try {
       setText(await file.text());
+      setSource("text");
       setFileNote(`${file.name} loaded. Check it below before you send it.`);
       setFileError(false);
       setTried(false);
@@ -162,31 +183,72 @@ function Form({ idea }: { idea: IdeaDetail }) {
       <form onSubmit={onSubmit} noValidate className="card flex min-w-0 flex-[3_1_480px] flex-col gap-[22px] p-6">
         <div className="flex flex-col gap-2.5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <label htmlFor="transcript" className="text-[15px] font-bold">
-              Transcript
-            </label>
-            <div role="group" aria-label="How to add the transcript" className="inline-flex overflow-hidden rounded-xl border-[2.5px] border-ink">
-              <button type="button" aria-pressed={mode === "paste"} className={tab(mode === "paste")} onClick={() => setMode("paste")}>
-                Paste text
-              </button>
-              <button
-                type="button"
-                aria-pressed={mode === "file"}
-                className={`${tab(mode === "file")} border-l-[2.5px] border-solid border-ink`}
-                onClick={() => setMode("file")}
+            {audioMode ? (
+              <span className="text-[15px] font-bold">Interview audio</span>
+            ) : (
+              <label htmlFor="transcript" className="text-[15px] font-bold">
+                Transcript
+              </label>
+            )}
+            {audio.enabled ? (
+              // Two rows of two on narrow screens; the ink gaps draw the dividers.
+              <div
+                role="group"
+                aria-label="How to add the interview"
+                className="grid grid-cols-2 gap-[2.5px] overflow-hidden rounded-xl border-[2.5px] border-ink bg-ink min-[560px]:flex"
               >
-                Upload .txt
-              </button>
-            </div>
+                {MODES.map(([value, label]) => (
+                  <button key={value} type="button" aria-pressed={mode === value} className={tab(mode === value)} onClick={() => setMode(value)}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div role="group" aria-label="How to add the transcript" className="inline-flex overflow-hidden rounded-xl border-[2.5px] border-ink">
+                <button type="button" aria-pressed={mode === "paste"} className={tab(mode === "paste")} onClick={() => setMode("paste")}>
+                  Paste text
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={mode === "file"}
+                  className={`${tab(mode === "file")} border-l-[2.5px] border-solid border-ink`}
+                  onClick={() => setMode("file")}
+                >
+                  Upload .txt
+                </button>
+              </div>
+            )}
           </div>
 
-          {mode === "paste" ? (
+          {audio.enabled && (
+            // Stays mounted while hidden, so a recording survives a look at the other tabs.
+            <div hidden={!audioMode}>
+              <AudioInput
+                ideaId={idea.id}
+                mode={mode === "audio" ? "audio" : "record"}
+                limits={audio}
+                consent={consent}
+                onConsentChange={setConsent}
+                onTranscript={(transcript) => {
+                  setText(transcript);
+                  setSource("audio");
+                  setMode("paste");
+                  setTried(false);
+                  setFileError(false);
+                  setFileNote("Transcript from your audio. Check it, fix any misheard word, then send it.");
+                }}
+              />
+            </div>
+          )}
+
+          {audioMode ? null : mode === "paste" ? (
             <textarea
               id="transcript"
               value={text}
               onChange={(e) => {
                 setText(e.target.value);
                 setTried(false);
+                if (!e.target.value.trim()) setSource("text");
               }}
               aria-describedby="transcript-help"
               aria-invalid={unlabelled || tooLong}
@@ -204,14 +266,14 @@ function Form({ idea }: { idea: IdeaDetail }) {
           )}
 
           {fileNote && mode === "paste" && <span className="text-sm text-muted">{fileNote}</span>}
-          {fileError && (
+          {fileError && !audioMode && (
             <Notice title="Upload failed." tone="danger">
               <span className="text-[15px] leading-normal text-ink-soft">
                 We can only read plain .txt files. Try another file, or paste the transcript as text.
               </span>
             </Notice>
           )}
-          {unlabelled ? (
+          {audioMode ? null : unlabelled ? (
             <p id="transcript-help" role="alert" className="m-0 text-sm leading-normal text-ink-soft">
               <strong className="text-danger">Missing speaker labels.</strong> We can’t tell who said what. Start each line with who
               is speaking, like Founder: or Customer:
@@ -269,15 +331,17 @@ function Form({ idea }: { idea: IdeaDetail }) {
           />
         </div>
 
-        <label className="flex cursor-pointer items-start gap-3 text-base leading-snug">
-          <input
-            type="checkbox"
-            checked={consent}
-            onChange={(e) => setConsent(e.target.checked)}
-            className="mt-0.5 size-6 shrink-0 accent-brand"
-          />
-          <span>The interviewee knew this conversation was recorded</span>
-        </label>
+        {!audioMode && (
+          <label className="flex cursor-pointer items-start gap-3 text-base leading-snug">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              className="mt-0.5 size-6 shrink-0 accent-brand"
+            />
+            <span>The interviewee knew this conversation was recorded</span>
+          </label>
+        )}
 
         <div className="flex flex-wrap items-center gap-3.5 border-t-[2.5px] border-line pt-5">
           <button
@@ -288,7 +352,13 @@ function Form({ idea }: { idea: IdeaDetail }) {
             {sending ? "Sending…" : "Check my interview"}
           </button>
           <span className="text-sm text-muted">
-            {!hasText ? "Paste or upload a transcript first." : !consent ? "Tick the consent box to continue." : "Takes up to 2 minutes."}
+            {!hasText
+              ? audioMode
+                ? "Record or upload the interview first."
+                : "Paste or upload a transcript first."
+              : !consent
+                ? "Tick the consent box to continue."
+                : "Takes up to 2 minutes."}
           </span>
         </div>
         {sendError && (
@@ -336,7 +406,9 @@ function Form({ idea }: { idea: IdeaDetail }) {
   );
 }
 
-export function UploadForm({ ideaId }: { ideaId: string }) {
+const TEXT_ONLY: AudioSettings = { enabled: false, maxMb: 100, maxMinutes: 60 };
+
+export function UploadForm({ ideaId, audio = TEXT_ONLY }: { ideaId: string; audio?: AudioSettings }) {
   const { load, retry } = useApi<IdeaDetail>(`/api/ideas/${ideaId}`);
 
   if (load.state === "missing") {
@@ -358,7 +430,7 @@ export function UploadForm({ ideaId }: { ideaId: string }) {
         <h1 className="m-0 font-serif text-[clamp(34px,4.4vw,52px)] leading-[1.05] font-medium tracking-[-0.02em]">Add an interview</h1>
         <Steps current={0} />
       </div>
-      {load.state === "ready" ? <Form idea={load.data} /> : <Skeleton />}
+      {load.state === "ready" ? <Form idea={load.data} audio={audio} /> : <Skeleton />}
     </section>
   );
 }
