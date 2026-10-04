@@ -1,7 +1,7 @@
 """Local smoke test of the whole agent path, with no Agentverse account and no paid calls.
 
 Starts the analyzer with fake AI clients, runs the front agent (and the specialists) in one
-process, and plays a founder: sends the idea, then a fixture transcript, and expects a verdict.
+process, and plays a founder: says hi, gives the idea, sends a fixture transcript, and expects a verdict.
 
     uv run --project agents python agents/tests/smoke_chat.py direct
     uv run --project agents python agents/tests/smoke_chat.py specialists
@@ -39,7 +39,7 @@ from uagents_core.contrib.protocols.chat import (  # noqa: E402
     chat_protocol_spec,
 )
 
-IDEA = "idea: An app that plans a week of dinners and orders the groceries."
+IDEA = "An app that plans a week of dinners and orders the groceries."
 TRANSCRIPT = (ROOT / "services/analyzer/fixtures/real_pain.txt").read_text()
 
 front = Agent(name="front-smoke", seed="realsignal-smoke-front")
@@ -66,8 +66,8 @@ def finish(code: int) -> None:
 
 
 @client.on_event("startup")
-async def send_idea(ctx: Context):
-    await ctx.send(front.address, chat(StartSessionContent(type="start-session"), TextContent(type="text", text=IDEA)))
+async def say_hi(ctx: Context):
+    await ctx.send(front.address, chat(StartSessionContent(type="start-session"), TextContent(type="text", text="hi")))
 
 
 @client_proto.on_message(ChatMessage)
@@ -76,7 +76,9 @@ async def on_reply(ctx: Context, sender: str, msg: ChatMessage):
         if not isinstance(item, TextContent):
             continue
         print(f"REPLY:\n{item.text}\n", flush=True)
-        if "Idea saved" in item.text:
+        if "what idea are you testing" in item.text:
+            await ctx.send(front.address, chat(TextContent(type="text", text=IDEA)))
+        elif "Now send me the interview" in item.text:
             await ctx.send(front.address, chat(TextContent(type="text", text=TRANSCRIPT)))
         elif "Verdict" in item.text:
             print(f"PASS ({MODE})", flush=True)

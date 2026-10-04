@@ -30,10 +30,26 @@ VERDICT_TEXT = {
     "pivot": "Pivot",
 }
 
-HELP = (
-    "I read a customer interview and tell you how much evidence of real demand is in it.\n\n"
-    "1. Tell me the idea you are testing: `idea: an app that plans dinners and orders groceries`\n"
-    "2. Paste the interview transcript, or upload it as a .txt file or a recording."
+INTRO = (
+    "Hi, I'm ValiDate. I read a customer interview and tell you how much evidence of "
+    "real demand is in it: what people actually did, paid for or committed to, as "
+    "opposed to polite compliments.\n\n"
+    "First, what idea are you testing? One sentence is enough."
+)
+ASK_TRANSCRIPT = (
+    "Now send me the interview: paste the transcript, or upload it as a .txt file. "
+    "One `Speaker: words` turn per line works best."
+)
+AFTER_VERDICT = "Send another interview for the same idea, or write `new idea: ...` to test a different one."
+
+# A leading @mention, quotes or brackets around the message, and an optional "idea:" label.
+MENTION = re.compile(r"^(?:@\S+\s+)+")
+WRAPPERS = "[](){}\"'`\u201c\u201d "
+IDEA_LABEL = re.compile(r"^(?:my\s+|the\s+)?(new\s+)?idea\s*(?:is\b|[:\-])\s*", re.IGNORECASE)
+GREETING = re.compile(
+    r"^(hi|hello|hey|yo|help|start|test|ok|okay|thanks|thank you|good (morning|afternoon|evening)|"
+    r"what (can|do) you do|who are you|how does (this|it) work)\b[\s!?.]*$",
+    re.IGNORECASE,
 )
 
 
@@ -119,39 +135,86 @@ def render(result: AnalyzeResponse) -> str:
     return "\n".join(lines)
 
 
+def clean(text: str) -> str:
+    """Drop a leading @mention and any quotes or brackets wrapped around the message."""
+    return MENTION.sub("", text.strip()).strip(WRAPPERS)
+
+
+def read_idea(text: str) -> tuple[str, bool]:
+    """Return (idea text, whether it was explicitly labelled as an idea)."""
+    match = IDEA_LABEL.match(text)
+    if match:
+        return text[match.end():].strip(WRAPPERS), True
+    return text, False
+
+
+def is_small_talk(text: str) -> bool:
+    return bool(GREETING.match(text)) or len(text.split()) < 3
+
+
+async def _analyze(ctx: Context, idea: str, transcript: str | None, audio: Upload | None) -> str:
+    try:
+        if use_specialists():
+            result = await _via_specialists(ctx, idea, transcript, audio)
+        else:
+            result = await _direct(idea, transcript, audio)
+    except Exception as ex:
+        ctx.logger.error(f"Analysis failed: {ex}")
+        return f"I could not analyze this interview. {ex}"
+    return f"{render(result)}\n\n{AFTER_VERDICT}"
+
+
 async def handle_founder_input(ctx: Context, sender: str, texts: list[str], uploads: list[Upload]) -> str:
-    idea_key = f"idea:{sender}"
+    """A short conversation: ask for the idea, then for the interview, then analyze.
+
+    Either can arrive first. An interview sent before the idea is kept until the idea arrives.
+    """
+    idea_key, pending_key = f"idea:{sender}", f"pending:{sender}"
     transcript: str | None = None
     audio: Upload | None = None
-    saved_idea = False
+    new_idea: str | None = None
+    small_talk = False
 
-    for text in texts:
-        stripped = text.strip()
-        if stripped.lower().startswith("idea:"):
-            ctx.storage.set(idea_key, stripped[5:].strip())
-            saved_idea = True
-        elif looks_like_transcript(stripped):
-            transcript = stripped
+    for raw in texts:
+        text = clean(raw)
+        ctx.logger.info(f"Text from founder: {text[:120]!r}")
+        if not text:
+            continue
+        candidate, labelled = read_idea(text)
+        if labelled and candidate:
+            new_idea = candidate
+        elif looks_like_transcript(text):
+            transcript = text
+        elif is_small_talk(text):
+            small_talk = True
+        elif not ctx.storage.get(idea_key):
+            new_idea = candidate
+        else:
+            small_talk = True
     for upload in uploads:
+        ctx.logger.info(f"Upload from founder: {upload.mime_type}, {len(upload.data)} bytes")
         if upload.is_text:
             transcript = upload.data.decode("utf-8", errors="replace").strip()
         else:
             audio = upload
 
+    if new_idea:
+        ctx.storage.set(idea_key, new_idea)
     idea = ctx.storage.get(idea_key)
     if not transcript and not audio:
-        if saved_idea:
-            return f'Idea saved: "{idea}". Now paste the interview transcript, or upload it as a .txt file or a recording.'
-        return HELP
-    if not idea:
-        return "Before I read the interview, tell me the idea it tests, like this: `idea: <one sentence>`. Then send the interview again."
+        transcript = ctx.storage.get(pending_key) if new_idea else None
 
-    try:
-        if use_specialists():
-            result = await _via_specialists(ctx, idea, transcript, None if transcript else audio)
-        else:
-            result = await _direct(idea, transcript, None if transcript else audio)
-    except Exception as ex:
-        ctx.logger.error(f"Analysis failed: {ex}")
-        return f"I could not analyze this interview. {ex}"
-    return render(result)
+    if transcript or audio:
+        if not idea:
+            if transcript:
+                ctx.storage.set(pending_key, transcript)
+                return "Got the interview. Before I read it: what idea does it test? One sentence is enough."
+            return "Got the recording. Before I read it: what idea does it test? Tell me in one sentence, then upload the recording again."
+        ctx.storage.set(pending_key, None)
+        return await _analyze(ctx, idea, transcript, None if transcript else audio)
+
+    if new_idea:
+        return f'Got it. The idea: "{idea}".\n\n{ASK_TRANSCRIPT}'
+    if idea and small_talk:
+        return f'I have your idea: "{idea}".\n\n{ASK_TRANSCRIPT}\n\nTo test a different idea, write `new idea: ...`.'
+    return INTRO

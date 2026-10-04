@@ -54,14 +54,14 @@ Dropped from the hackathon plan for now: the Market Check agent, cross-interview
 - **Jev access:** TypeSafe's HTTP API (`POST /v1/systemone`), not the SDK. `JEV_BASE_URL` and `JEV_MODEL` switch it to OpenRouter. One `choice` question per sentence, 20 per request.
 - **Stage endpoints:** `/transcribe`, `/judge` and `/write` exist so each specialist agent wraps one stage. `/analyze` runs the same functions, and a test asserts the two paths give identical results.
 - **Agent messages** carry analyzer payloads as dicts and validate them with the generated models, so no contract type is written by hand.
-- **Agent chat:** the founder sends `idea: ...` first; the front agent keeps it per sender in `ctx.storage`. A message is treated as a transcript when it has two or more `Speaker:` lines or is longer than 400 characters.
+- **Agent chat:** a guided conversation in `agents/front/flow.py`. The agent introduces itself and asks for the idea, then asks for the interview. The idea needs no prefix (`idea:` and a leading `@mention` are accepted and stripped). An interview sent before the idea is kept and analyzed once the idea arrives. The idea is stored per sender in `ctx.storage`; `new idea: ...` replaces it. A message counts as a transcript when it has two or more `Speaker:` lines or is longer than 400 characters.
 - **Fixtures** are written, not recorded. Replace them with real mock interviews when you have them.
 - **Seeds decide addresses.** The README addresses come from Murilo's `.env`. Two machines running the same seed compete for one mailbox, so agree who runs which agent.
 
 ## Next
 
 1. Put `ELEVENLABS_API_KEY`, `JEV_API_KEY` and `OPENAI_API_KEY` in `.env`, set `ANALYZER_FAKE_CLIENTS=` (empty), and run one real interview through the web app. Expect to adjust the Jev instructions and the writer prompt.
-2. ASI:One check: start the front agent, connect its mailbox, send `idea: ...`, then paste a transcript and upload a `.txt`.
+2. ASI:One check: the mailbox is connected and the agent answers in ASI:One. Still to confirm there: a pasted transcript gives a verdict, and a `.txt` upload works.
 3. Connect the three specialists, set `FRONT_USE_SPECIALISTS=1`, repeat.
 4. Decide audio storage and add auth.
 5. Railway: three services (web, analyzer, Postgres), analyzer on the private network.
@@ -69,6 +69,7 @@ Dropped from the hackathon plan for now: the Market Check agent, cross-interview
 
 ## Changelog
 
+- **2026-10-03** Front agent conversation rewritten after the first ASI:One test: it now introduces itself, asks for the idea, then asks for the interview, and no longer needs the `idea:` prefix. Added `agents/tests/test_flow.py` (11 tests, offline).
 - **2026-10-03** Product renamed from Real Signal to ValiDate in everything a user sees: web app, agent names and protocols, analyzer title, docs. Internal identifiers keep the old name: the repo and folder (`realsignal`), package names (`@realsignal/*`), the local database name, and the agent seeds (so addresses did not change).
 - **2026-10-03** Migrated to the finalized stack. Added the contract with generated TS and Pydantic types and a drift check; the FastAPI analyzer with pipeline, fakes, fixtures and tests; the Next.js app with Drizzle schema and migrations; local Postgres; the front agent calling the analyzer; three specialist agents over stage endpoints; `CLAUDE.md`. Moved agent scripts and tests under `agents/`, switched Python to `uv`, removed `brain/`.
 - **2026-10-03** Phase 0 scaffold: hello-world front agent with Chat Protocol and upload handling, seed generation, local smoke test.

@@ -66,7 +66,7 @@ uv run --project agents python agents/scripts/gen_seeds.py   # fills seeds and a
 uv run --project agents python agents/front/agent.py
 ```
 
-On first start, open the "Agent inspector" link in the log and choose **Connect → Mailbox**. In ASI:One, message the agent: first `idea: <your idea>`, then paste the transcript or upload it as a `.txt` file.
+On first start, open the "Agent inspector" link in the log and choose **Connect → Mailbox**. In ASI:One, say hi to the agent. It asks for the idea you are testing, then for the interview: paste the transcript or upload it as a `.txt` file.
 
 To run the full team, start `agents/intake/agent.py`, `agents/analyst/agent.py` and `agents/strategist/agent.py` the same way, connect each mailbox, and set `FRONT_USE_SPECIALISTS=1`.
 
@@ -76,6 +76,7 @@ To run the full team, start `agents/intake/agent.py`, `agents/analyst/agent.py` 
 cd services/analyzer && uv run pytest     # offline, no paid API calls
 pnpm contracts:check                      # generated types match the contract
 pnpm -r build && pnpm typecheck
+cd agents && uv run pytest tests/test_flow.py
 uv run --project agents python agents/tests/smoke_chat.py specialists
 ```
 

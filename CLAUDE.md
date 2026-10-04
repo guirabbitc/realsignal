@@ -54,7 +54,7 @@ realsignal/
 4. Analyzer: transcribe (ElevenLabs, with speaker labels) → split into sentences → Jev judges each interviewee sentence → Python computes the score → Jev picks the verdict → OpenAI writes the summary and next steps. Returns one JSON matching the contract.
 5. Next.js saves sentences + analysis, sets status `done` (or `failed` with the error), and renders the result.
 
-In ASI:One, the founder sends `idea: ...` and then the transcript to the front agent. With `FRONT_USE_SPECIALISTS=0` it calls `/analyze`; with `1` it chains Intake → Signal Analyst → Strategist via `ctx.send_and_receive`, each calling one stage endpoint.
+In ASI:One, the front agent introduces itself and asks for the idea, then asks for the interview (either can arrive first; see `agents/front/flow.py`). With `FRONT_USE_SPECIALISTS=0` it calls `/analyze`; with `1` it chains Intake → Signal Analyst → Strategist via `ctx.send_and_receive`, each calling one stage endpoint.
 
 ## Non-negotiable rules
 
@@ -92,6 +92,7 @@ pnpm contracts:generate                     # after editing analyze.schema.json
 pnpm contracts:check                        # fails if generated files drifted
 pnpm -r build && pnpm typecheck
 uv run --project agents python agents/tests/smoke_chat.py direct        # or: specialists
+cd agents && uv run pytest tests/test_flow.py                           # the front agent's conversation
 uv run --project agents python agents/front/agent.py
 ```
 
