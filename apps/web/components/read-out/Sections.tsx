@@ -89,7 +89,7 @@ export function VerdictCard({ result, animate, positions }: { result: AnalyzeRes
           </span>
           <span className="sr-only">{result.score === null ? "No signal score." : `Signal score ${result.score} out of 100.`}</span>
           <span aria-hidden="true" className="text-[13px] font-bold text-muted">
-            Signal score out of 100
+            {result.score === null ? "No signal score" : "Signal score out of 100"}
           </span>
         </div>
       </div>

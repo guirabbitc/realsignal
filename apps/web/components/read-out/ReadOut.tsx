@@ -182,6 +182,19 @@ export function ReadOut({ id }: { id: string }) {
 
       {done && (
         <>
+          {result.statements.length === 0 && (
+            <Notice title="We found no customer lines in this transcript.">
+              <span className="text-[15px] leading-normal text-ink-soft">
+                We judge the lines that start with Customer:. This transcript had none, so every line was counted as yours. If you
+                labelled the speakers another way, like Interviewer: or a name, add it again and tell us who is who.
+              </span>
+              <div>
+                <Link href={uploadHref} className="btn btn-primary">
+                  Add the interview again
+                </Link>
+              </div>
+            </Notice>
+          )}
           <VerdictCard result={result} animate={fresh} positions={positions} />
           {result.verdict === "need_more_evidence" && <MissingEvidence text={result.missing_evidence} />}
           <TopQuotes statements={result.statements} animate={fresh} />

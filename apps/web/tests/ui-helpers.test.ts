@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import type { IdeaInterviewRow } from "../components/api";
 import { barHeight, readOuts, shortName, trendCaption } from "../components/ideas/history";
-import { hasSpeakerLabels } from "../components/upload/checks";
+import { detectSpeakers, guessRoles, needsMapping, relabel } from "../components/upload/checks";
 import { EXAMPLES } from "../lib/examples";
 
 const FIXTURES = resolve(__dirname, "../../../services/analyzer/fixtures");
@@ -19,15 +19,56 @@ describe("examples", () => {
   });
 });
 
-describe("hasSpeakerLabels", () => {
-  it("accepts Founder:/Customer: lines in any case, with leading spaces", () => {
-    expect(hasSpeakerLabels("Founder: hi\nCustomer: hello")).toBe(true);
-    expect(hasSpeakerLabels("intro line\n  customer: only the customer")).toBe(true);
+describe("speaker labels", () => {
+  const interviewerAndFounder = [
+    "Mock interview",
+    "Interviewer: How do you use your data today?",
+    "",
+    "Founder: Stripe, HubSpot and a few spreadsheets: it works.",
+    "Interviewer: Would you pay for it?",
+    "Founder: Probably, yes.",
+  ].join("\n");
+
+  it("finds each label once, with its line count, ignoring titles, URLs and times", () => {
+    expect(detectSpeakers(interviewerAndFounder)).toEqual([
+      { key: "interviewer", label: "Interviewer", lines: 2 },
+      { key: "founder", label: "Founder", lines: 2 },
+    ]);
+    expect(detectSpeakers("See https://example.com\n10:30 we started\nno labels here")).toEqual([]);
   });
 
-  it("rejects transcripts the analyzer would call unlabelled", () => {
-    expect(hasSpeakerLabels("YOU: hi\nPAT: hello")).toBe(false);
-    expect(hasSpeakerLabels("We talked about Founder: things")).toBe(false);
+  it("leaves the standard Founder:/Customer: format alone", () => {
+    for (const example of EXAMPLES) expect(needsMapping(detectSpeakers(example.transcript))).toBe(false);
+  });
+
+  it("asks who is who when an interviewee is labelled Founder:", () => {
+    const speakers = detectSpeakers(interviewerAndFounder);
+    expect(needsMapping(speakers)).toBe(true);
+    expect(guessRoles(speakers)).toEqual({ interviewer: "founder", founder: "customer" });
+  });
+
+  it("guesses YOU as the founder and an unknown name as the customer", () => {
+    expect(guessRoles(detectSpeakers("YOU: hi\nPAT: hello"))).toEqual({ you: "founder", pat: "customer" });
+    expect(guessRoles(detectSpeakers("Gui: hi\nPeter Smith: hello"))).toEqual({ gui: "founder", "peter smith": "customer" });
+  });
+
+  it("asks when nobody is labelled Customer:", () => {
+    expect(needsMapping(detectSpeakers("Founder: hi\nFounder: anyone?"))).toBe(true);
+  });
+
+  it("rewrites only the labels, keeping every word after the colon", () => {
+    const out = relabel(interviewerAndFounder, { interviewer: "founder", founder: "customer" });
+    expect(out).toBe(
+      [
+        "Mock interview",
+        "Founder: How do you use your data today?",
+        "",
+        "Customer: Stripe, HubSpot and a few spreadsheets: it works.",
+        "Founder: Would you pay for it?",
+        "Customer: Probably, yes.",
+      ].join("\n"),
+    );
+    expect(relabel("Note: aside\r\nPAT: hi", { note: "ignore", pat: "customer" })).toBe("Note: aside\r\nCustomer: hi");
   });
 });
 

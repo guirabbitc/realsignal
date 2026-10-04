@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { ApiError, apiPost, useApi, type IdeaDetail } from "@/components/api";
 import { Breadcrumb, LoadFailed, Notice, Skeleton, Steps } from "@/components/ui/feedback";
 import { EXAMPLES, type ExampleKey } from "@/lib/examples";
 
-import { hasSpeakerLabels, MAX_TRANSCRIPT_CHARS } from "./checks";
+import { detectSpeakers, guessRoles, MAX_TRANSCRIPT_CHARS, needsMapping, relabel, type Role, type Speaker } from "./checks";
 
 type Kind = "interview" | "demo";
 
@@ -16,6 +16,69 @@ const KINDS: [Kind, string][] = [
   ["interview", "Customer interview"],
   ["demo", "Demo"],
 ];
+
+const ROLES: [Role, string][] = [
+  ["founder", "Me"],
+  ["customer", "Customer"],
+  ["ignore", "Not a speaker"],
+];
+
+function WhoIsWho({
+  speakers,
+  roles,
+  onChange,
+  noCustomer,
+}: {
+  speakers: Speaker[];
+  roles: Record<string, Role>;
+  onChange: (key: string, role: Role) => void;
+  noCustomer: boolean;
+}) {
+  return (
+    <fieldset className="m-0 flex flex-col gap-3 rounded-[14px] border-[2.5px] border-ink bg-paper p-4">
+      <legend className="float-left mb-1 w-full p-0">
+        <strong className="block text-[15px]">Who is who?</strong>
+        <span className="block text-sm leading-normal text-muted">
+          We read two labels: Founder: for you and Customer: for the person you interviewed. Tell us who each of your labels is.
+          We only change the labels; every word stays as written.
+        </span>
+      </legend>
+      {speakers.map((s) => (
+        <div key={s.key} className="flex flex-wrap items-center justify-between gap-2.5">
+          <span className="font-mono text-sm font-bold">
+            {s.label}: <span className="font-normal text-muted">{s.lines === 1 ? "1 line" : `${s.lines} lines`}</span>
+          </span>
+          <div role="radiogroup" aria-label={`${s.label} is`} className="inline-flex overflow-hidden rounded-xl border-[2.5px] border-ink">
+            {ROLES.map(([role, label], i) => (
+              <label
+                key={role}
+                className={`cursor-pointer px-3 py-1.5 text-sm font-bold has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-brand ${
+                  i > 0 ? "border-l-[2.5px] border-ink" : ""
+                } ${roles[s.key] === role ? "bg-ink text-paper" : "bg-white text-ink"}`}
+              >
+                <input
+                  type="radio"
+                  name={`role-${s.key}`}
+                  value={role}
+                  checked={roles[s.key] === role}
+                  onChange={() => onChange(s.key, role)}
+                  className="sr-only"
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+        </div>
+      ))}
+      {noCustomer && (
+        <p role="alert" className="m-0 text-sm leading-normal text-ink-soft">
+          <strong className="text-danger">Nobody is the customer.</strong> Mark the person you interviewed as Customer, or there is
+          nothing for us to judge.
+        </p>
+      )}
+    </fieldset>
+  );
+}
 
 const field = "box-border min-h-[52px] rounded-xl border-[2.5px] border-ink bg-white px-4 font-sans text-[17px] text-ink";
 
@@ -39,9 +102,14 @@ function Form({ idea }: { idea: IdeaDetail }) {
   const [tried, setTried] = useState(false);
   const [sending, setSending] = useState<"form" | ExampleKey | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [roleChoices, setRoleChoices] = useState<Record<string, Role>>({});
 
   const hasText = text.trim().length > 0;
-  const unlabelled = tried && hasText && !hasSpeakerLabels(text);
+  const speakers = useMemo(() => detectSpeakers(text), [text]);
+  const mapping = speakers.length > 0 && needsMapping(speakers);
+  const roles = useMemo(() => ({ ...guessRoles(speakers), ...roleChoices }), [speakers, roleChoices]);
+  const noCustomer = mapping && !speakers.some((s) => roles[s.key] === "customer");
+  const unlabelled = tried && hasText && speakers.length === 0;
   const tooLong = text.length > MAX_TRANSCRIPT_CHARS;
   const ready = hasText && consent;
 
@@ -60,8 +128,9 @@ function Form({ idea }: { idea: IdeaDetail }) {
   function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     setTried(true);
-    if (!ready || tooLong || !hasSpeakerLabels(text) || sending) return;
-    send({ transcript: text, kind, interviewee_label: who.trim() || null }, "form");
+    if (!ready || tooLong || speakers.length === 0 || noCustomer || sending) return;
+    const transcript = mapping ? relabel(text, roles) : text;
+    send({ transcript, kind, interviewee_label: who.trim() || null }, "form");
   }
 
   async function onFile(event: React.ChangeEvent<HTMLInputElement>) {
@@ -139,8 +208,8 @@ function Form({ idea }: { idea: IdeaDetail }) {
           )}
           {unlabelled ? (
             <p id="transcript-help" role="alert" className="m-0 text-sm leading-normal text-ink-soft">
-              <strong className="text-danger">Missing speaker labels.</strong> We can’t tell who said what. Start each line with
-              Founder: or Customer:
+              <strong className="text-danger">Missing speaker labels.</strong> We can’t tell who said what. Start each line with who
+              is speaking, like Founder: or Customer:
             </p>
           ) : tooLong ? (
             <p id="transcript-help" role="alert" className="m-0 text-sm leading-normal text-ink-soft">
@@ -149,10 +218,19 @@ function Form({ idea }: { idea: IdeaDetail }) {
             </p>
           ) : (
             <span id="transcript-help" className="text-sm text-muted">
-              Start each line with Founder: or Customer:
+              Start each line with who is speaking, like Founder: or Customer:
             </span>
           )}
         </div>
+
+        {mapping && (
+          <WhoIsWho
+            speakers={speakers}
+            roles={roles}
+            noCustomer={noCustomer}
+            onChange={(key, role) => setRoleChoices((current) => ({ ...current, [key]: role }))}
+          />
+        )}
 
         <fieldset className="m-0 flex flex-col gap-2.5 border-0 p-0">
           <legend className="mb-2.5 p-0 text-[15px] font-bold">This was a</legend>
