@@ -153,6 +153,29 @@ export async function saveAnalysis(founderId: string, interviewId: string, resul
   });
 }
 
+/**
+ * Puts a failed interview back to processing so it can be analyzed again from its saved transcript.
+ * created_at moves to now because the 5-minute stale rule measures from it (SPEC §6).
+ * Null unless the interview belongs to this founder and failed.
+ */
+export async function restartFailedInterview(founderId: string, interviewId: string) {
+  const db = getDb();
+  const [row] = await db
+    .update(interviews)
+    .set({ status: "processing", error: null, createdAt: new Date() })
+    .where(and(ownedInterview(founderId, interviewId), eq(interviews.status, "failed")))
+    .returning({
+      id: interviews.id,
+      ideaId: interviews.ideaId,
+      transcript: interviews.transcript,
+      kind: interviews.kind,
+      intervieweeLabel: interviews.intervieweeLabel,
+    });
+  if (!row) return null;
+  const [idea] = await db.select({ oneLiner: ideas.oneLiner }).from(ideas).where(eq(ideas.id, row.ideaId));
+  return { ...row, ideaOneLiner: idea.oneLiner };
+}
+
 export async function markInterviewFailed(founderId: string, interviewId: string, code: string): Promise<void> {
   await getDb()
     .update(interviews)

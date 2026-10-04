@@ -146,6 +146,13 @@ export function AudioInput({
   const [fileError, setFileError] = useState<string | null>(null);
   const [flow, setFlow] = useState<Flow>({ step: "capture" });
   const rec = recorder.state;
+  // A recording only lives in this tab, so every screen after it offers a copy.
+  const downloadRecording =
+    mode === "record" && rec.phase === "recorded" ? (
+      <a className={plainButton} href={rec.url} download={rec.fileName}>
+        Download audio
+      </a>
+    ) : null;
 
   async function transcribe(pending: Pending) {
     setFlow({ step: "sending", pending, phase: "uploading" });
@@ -194,10 +201,11 @@ export function AudioInput({
       <div role="alert" className="flex flex-col gap-3 rounded-[18px] border-[2.5px] border-danger bg-white p-5">
         <strong className="text-[17px] text-danger">Transcription failed.</strong>
         <span className="text-[15px] leading-normal text-ink-soft">{flow.message}</span>
-        <div>
+        <div className="flex flex-wrap gap-3">
           <button type="button" className={plainButton} onClick={() => setFlow({ step: "capture" })}>
             Back to my audio
           </button>
+          {downloadRecording}
         </div>
       </div>
     );
@@ -272,6 +280,7 @@ export function AudioInput({
           <button type="button" className={plainButton} onClick={() => setFlow({ step: "capture" })}>
             Back to my audio
           </button>
+          {downloadRecording}
         </div>
       </div>
     );
@@ -363,10 +372,16 @@ export function AudioInput({
                 >
                   Use this recording
                 </button>
+                <a className={plainButton} href={rec.url} download={rec.fileName}>
+                  Download audio
+                </a>
                 <button type="button" className={plainButton} onClick={recorder.reset}>
                   Record again
                 </button>
               </div>
+              <span className="text-sm text-muted">
+                We don’t keep your audio. Download it if you want a copy; it disappears when you leave this page.
+              </span>
             </>
           ) : (
             <>

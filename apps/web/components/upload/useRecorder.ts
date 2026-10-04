@@ -8,7 +8,7 @@ export type RecorderState =
   | { phase: "idle" }
   | { phase: "asking" }
   | { phase: "recording" }
-  | { phase: "recorded"; blob: Blob; url: string; seconds: number; hitLimit: boolean }
+  | { phase: "recorded"; blob: Blob; url: string; seconds: number; hitLimit: boolean; fileName: string }
   | { phase: "denied" }
   | { phase: "no-mic" }
   | { phase: "unsupported" }
@@ -98,8 +98,10 @@ export function useRecorder(maxSeconds: number) {
       current.chunks = [];
       releaseMic();
       current.url = URL.createObjectURL(blob);
+      // e.g. interview-2026-10-04-1744.webm, so a downloaded copy is easy to find later.
+      const stamp = new Date().toISOString().slice(0, 16).replace("T", "-").replace(":", "");
       setLevel(0);
-      setState({ phase: "recorded", blob, url: current.url, seconds, hitLimit });
+      setState({ phase: "recorded", blob, url: current.url, seconds, hitLimit, fileName: `interview-${stamp}${extensionFor(mimeType)}` });
     };
 
     // Level meter: loudness of the last few milliseconds, refreshed about 10 times a second.

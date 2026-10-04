@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-import { apiGet, type IdeaDetail } from "@/components/api";
+import { apiGet, apiPost, type IdeaDetail } from "@/components/api";
 import { useReportCurrentIdea } from "@/components/shell/current-idea";
 import { Breadcrumb, LoadFailed, Notice, Skeleton, Steps } from "@/components/ui/feedback";
 
+import { SavedTranscript } from "./SavedTranscript";
 import { MissingEvidence, MistakesAndReasons, NextQuestions, TopQuotes, VerdictCard } from "./Sections";
 import { Transcript } from "./Transcript";
 import { errorMessage, shortDate, type InterviewResponse } from "./view-model";
@@ -55,6 +56,23 @@ export function ReadOut({ id }: { id: string }) {
   const [load, setLoad] = useState<Load>({ state: "loading" });
   const [attempt, setAttempt] = useState(0);
   const [idea, setIdea] = useState<IdeaDetail | null>(null);
+  const [retrying, setRetrying] = useState(false);
+  const [retryError, setRetryError] = useState<string | null>(null);
+
+  /** Analyzes the saved transcript again, then polls like a new interview. */
+  async function retry() {
+    setRetrying(true);
+    setRetryError(null);
+    try {
+      await apiPost(`/api/interviews/${id}/retry`, {});
+      setLoad({ state: "loading" });
+      setAttempt((a) => a + 1);
+    } catch {
+      setRetryError("We couldn’t start the analysis again. Check your connection and try again.");
+    } finally {
+      setRetrying(false);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -170,15 +188,27 @@ export function ReadOut({ id }: { id: string }) {
           <span className="text-[15px] leading-normal text-ink-soft">{errorMessage(interview.error)}</span>
           {interview.error && <span className="font-mono text-[13px] text-muted">Error code: {interview.error}</span>}
           <div className="mt-1.5 flex flex-wrap gap-2.5">
-            <Link href={uploadHref} className="btn btn-primary">
+            {interview.status === "failed" && (
+              <button type="button" className="btn btn-primary disabled:cursor-not-allowed disabled:opacity-60" disabled={retrying} onClick={retry}>
+                {retrying ? "Starting…" : "Try again"}
+              </button>
+            )}
+            <Link href={uploadHref} className={`btn ${interview.status === "failed" ? "btn-secondary" : "btn-primary"}`}>
               Add the interview again
             </Link>
             <Link href={ideaHref} className="btn btn-secondary">
               Back to the idea
             </Link>
           </div>
+          {retryError && (
+            <p role="alert" className="m-0 text-[15px] font-bold text-danger">
+              {retryError}
+            </p>
+          )}
         </Notice>
       )}
+
+      {failed && interview.transcript && <SavedTranscript text={interview.transcript} />}
 
       {done && (
         <>
