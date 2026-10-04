@@ -12,6 +12,7 @@ dependencies = [
   "openai>=1.82",
   "python-dotenv>=1.0",
   "certifi",
+  "pypdf>=6.19.0",
 ]
 
 [dependency-groups]

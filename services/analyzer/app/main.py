@@ -23,7 +23,11 @@ from app.contracts import (  # noqa: E402
 )
 from app.pipeline import Clients, judge, run_analysis, write  # noqa: E402
 from app.pipeline.jev import JEV_BASE_URL, JEV_MODEL, FakeJudge, JevJudge  # noqa: E402
-from app.pipeline.transcribe import ElevenLabsTranscriber, FakeTranscriber  # noqa: E402
+from app.pipeline.transcribe import (  # noqa: E402
+    ElevenLabsTranscriber,
+    FakeTranscriber,
+    file_to_transcript,
+)
 from app.pipeline.writer import OPENAI_MODEL, FakeWriter, OpenAIWriter  # noqa: E402
 
 logger = logging.getLogger("analyzer")
@@ -87,14 +91,21 @@ def health() -> dict[str, str]:
 
 
 async def _transcribe_upload(file, clients: Clients) -> str:
-    return clients.transcriber.transcribe(
-        await file.read(), file.filename or "audio", file.content_type or "application/octet-stream"
-    )
+    """Text and PDF files are read; anything else is treated as a recording and transcribed."""
+    try:
+        return file_to_transcript(
+            await file.read(),
+            file.filename or "upload",
+            file.content_type or "application/octet-stream",
+            clients.transcriber,
+        )
+    except ValueError as ex:
+        raise HTTPException(status_code=422, detail=str(ex)) from ex
 
 
 @app.post("/analyze", response_model=AnalyzeResponse, dependencies=[Depends(require_key)])
 async def analyze(request: Request, clients: Clients = Depends(get_clients)) -> AnalyzeResponse:
-    """JSON body (AnalyzeRequest), or multipart/form-data with `idea` and an audio `file`."""
+    """JSON body (AnalyzeRequest), or multipart/form-data with `idea` and a `file` (PDF, text or audio)."""
     content_type = request.headers.get("content-type", "")
     if content_type.startswith("multipart/form-data"):
         form = await request.form()

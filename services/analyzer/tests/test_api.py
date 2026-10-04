@@ -1,6 +1,9 @@
-from jsonschema import Draft202012Validator
+import io
 
-from tests.conftest import IDEA, SECRET, fixture_text
+from jsonschema import Draft202012Validator
+from pypdf import PdfWriter
+
+from tests.conftest import FIXTURES, IDEA, SECRET, fixture_text
 
 AUTH = {"X-Analyzer-Key": SECRET}
 
@@ -82,3 +85,45 @@ def test_stages_chained_equal_analyze(client, schema):
 def test_transcribe_stage_returns_transcript(client):
     response = client.post("/transcribe", files={"file": ("a.mp3", b"x", "audio/mpeg")}, headers=AUTH)
     assert response.status_code == 200 and response.json()["transcript"].startswith("speaker_0:")
+
+
+def test_analyze_reads_a_pdf_transcript(client):
+    pdf = (FIXTURES / "polite.pdf").read_bytes()
+    response = client.post(
+        "/analyze", data={"idea": IDEA}, files={"file": ("polite.pdf", pdf, "application/pdf")}, headers=AUTH
+    )
+    assert response.status_code == 200
+    from_text = client.post(
+        "/analyze", json={"idea": IDEA, "transcript": fixture_text("polite")}, headers=AUTH
+    ).json()
+    body = response.json()
+    assert [(s["speaker"], s["text"], s["label"]) for s in body["sentences"]] == [
+        (s["speaker"], s["text"], s["label"]) for s in from_text["sentences"]
+    ]
+    assert body["verdict"] == "pivot"
+
+
+def test_pdf_is_recognised_even_with_a_generic_content_type(client):
+    pdf = (FIXTURES / "real_pain.pdf").read_bytes()
+    response = client.post(
+        "/transcribe", files={"file": ("upload", pdf, "application/octet-stream")}, headers=AUTH
+    )
+    assert response.status_code == 200 and response.json()["transcript"].startswith("Interviewer:")
+
+
+def test_pdf_without_text_is_rejected_clearly(client):
+    buffer = io.BytesIO()
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+    writer.write(buffer)
+    response = client.post(
+        "/transcribe", files={"file": ("scan.pdf", buffer.getvalue(), "application/pdf")}, headers=AUTH
+    )
+    assert response.status_code == 422 and "No text found" in response.json()["detail"]
+
+
+def test_broken_pdf_is_rejected_clearly(client):
+    response = client.post(
+        "/transcribe", files={"file": ("bad.pdf", b"%PDF-1.4 not really a pdf", "application/pdf")}, headers=AUTH
+    )
+    assert response.status_code == 422 and "Could not read the PDF" in response.json()["detail"]

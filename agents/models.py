@@ -10,7 +10,7 @@ from uagents import Model
 
 
 class IntakeRequest(Model):
-    """Either pasted/uploaded text, or a recording as base64."""
+    """Either pasted/uploaded text, or a file (PDF or recording) as base64 in `audio_b64`."""
     text: Optional[str] = None
     audio_b64: Optional[str] = None
     filename: str = "audio"

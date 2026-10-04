@@ -23,6 +23,8 @@ from models import (
 STAGE_TIMEOUT_SECONDS = 45
 TEAM_TRACE = "_Handled by the ValiDate team: Intake → Signal Analyst → Strategist_"
 TOP_QUOTES = 3
+# A file sent before the idea is kept in agent storage only if it is small.
+MAX_PENDING_FILE_BYTES = 2_000_000
 SPEAKER_LINE = re.compile(r"^\s*[^:\n]{1,40}:\s+\S", re.MULTILINE)
 
 VERDICT_TEXT = {
@@ -39,7 +41,7 @@ INTRO = (
     "First, what idea are you testing? One sentence is enough."
 )
 ASK_TRANSCRIPT = (
-    "Now send me the interview: paste the transcript, or upload it as a .txt file. "
+    "Now send me the interview: paste the transcript, or upload it as a PDF. "
     "One `Speaker: words` turn per line works best."
 )
 AFTER_VERDICT = "Send another interview for the same idea, or write `new idea: ...` to test a different one."
@@ -57,6 +59,8 @@ GREETING = re.compile(
 
 @dataclass
 class Upload:
+    """A file from the founder. Text is read here; PDFs and recordings go to the analyzer as they are."""
+
     mime_type: str
     data: bytes
 
@@ -111,7 +115,7 @@ async def _via_specialists(ctx: Context, idea: str, transcript: str | None, audi
 
 async def _direct(idea: str, transcript: str | None, audio: Upload | None) -> AnalyzeResponse:
     if audio:
-        return await analyzer_client.analyze_audio(idea, audio.data, "recording", audio.mime_type)
+        return await analyzer_client.analyze_audio(idea, audio.data, "upload", audio.mime_type)
     return await analyzer_client.analyze(idea, transcript)
 
 
@@ -180,7 +184,7 @@ async def handle_founder_input(ctx: Context, sender: str, texts: list[str], uplo
 
     Either can arrive first. An interview sent before the idea is kept until the idea arrives.
     """
-    idea_key, pending_key = f"idea:{sender}", f"pending:{sender}"
+    idea_key, pending_key, pending_file_key = f"idea:{sender}", f"pending:{sender}", f"pending_file:{sender}"
     transcript: str | None = None
     audio: Upload | None = None
     new_idea: str | None = None
@@ -212,16 +216,23 @@ async def handle_founder_input(ctx: Context, sender: str, texts: list[str], uplo
     if new_idea:
         ctx.storage.set(idea_key, new_idea)
     idea = ctx.storage.get(idea_key)
-    if not transcript and not audio:
-        transcript = ctx.storage.get(pending_key) if new_idea else None
+    if not transcript and not audio and new_idea:
+        transcript = ctx.storage.get(pending_key)
+        kept = ctx.storage.get(pending_file_key)
+        if not transcript and kept:
+            audio = Upload(mime_type=kept["mime_type"], data=base64.b64decode(kept["b64"]))
 
     if transcript or audio:
         if not idea:
             if transcript:
                 ctx.storage.set(pending_key, transcript)
                 return "Got the interview. Before I read it: what idea does it test? One sentence is enough."
-            return "Got the recording. Before I read it: what idea does it test? Tell me in one sentence, then upload the recording again."
+            if len(audio.data) <= MAX_PENDING_FILE_BYTES:
+                ctx.storage.set(pending_file_key, {"mime_type": audio.mime_type, "b64": base64.b64encode(audio.data).decode()})
+                return "Got the file. Before I read it: what idea does it test? One sentence is enough."
+            return "Got the file. Before I read it: what idea does it test? Tell me in one sentence, then upload the file again."
         ctx.storage.set(pending_key, None)
+        ctx.storage.set(pending_file_key, None)
         return await _analyze(ctx, idea, transcript, None if transcript else audio)
 
     if new_idea:

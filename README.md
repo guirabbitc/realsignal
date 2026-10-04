@@ -57,7 +57,7 @@ uv run uvicorn app.main:app --port 8000
 pnpm dev:web
 ```
 
-Open http://localhost:3000, enter an idea, and paste or upload an interview. Sample transcripts are in `services/analyzer/fixtures/`.
+Open http://localhost:3000, enter an idea, and paste or upload an interview. Sample transcripts, as `.txt` and `.pdf`, are in `services/analyzer/fixtures/`.
 
 ### 4. Agents (optional, for ASI:One)
 
@@ -66,7 +66,7 @@ uv run --project agents python agents/scripts/gen_seeds.py   # fills seeds and a
 uv run --project agents python agents/front/agent.py
 ```
 
-On first start, open the "Agent inspector" link in the log and choose **Connect → Mailbox**. In ASI:One, say hi to the agent. It asks for the idea you are testing, then for the interview: paste the transcript or upload it as a `.txt` file.
+On first start, open the "Agent inspector" link in the log and choose **Connect → Mailbox**. In ASI:One, say hi to the agent. It asks for the idea you are testing, then for the interview: paste the transcript or upload it as a PDF (ASI:One accepts only PDFs as attachments).
 
 To run the full team in one terminal:
 

@@ -43,7 +43,15 @@ def calls(monkeypatch):
             summary="Summary.", next_steps=["Step one."],
         )
 
+    async def fake_analyze_file(idea, data, filename, mime_type):
+        seen.append((idea, mime_type, len(data)))
+        return AnalyzeResponse(
+            transcript="from file", sentences=[], score=50, verdict="narrow_down",
+            summary="Summary.", next_steps=["Step one."],
+        )
+
     monkeypatch.setattr(flow.analyzer_client, "analyze", fake_analyze)
+    monkeypatch.setattr(flow.analyzer_client, "analyze_audio", fake_analyze_file)
     monkeypatch.setenv("FRONT_USE_SPECIALISTS", "0")
     return seen
 
@@ -123,3 +131,18 @@ def test_specialists_down_falls_back_to_the_analyzer(calls, monkeypatch):
     say(ctx, IDEA)
     reply = say(ctx, TRANSCRIPT)
     assert "Verdict" in reply and "Handled by" not in reply and calls == [(IDEA, TRANSCRIPT)]
+
+
+def test_pdf_upload_is_sent_to_the_analyzer_as_a_file(calls):
+    ctx = FakeCtx()
+    say(ctx, IDEA)
+    reply = say(ctx, upload=flow.Upload("application/pdf", b"%PDF-1.4 fake"))
+    assert "Verdict" in reply and calls == [(IDEA, "application/pdf", 13)]
+
+
+def test_pdf_sent_before_the_idea_is_kept(calls):
+    ctx = FakeCtx()
+    reply = say(ctx, upload=flow.Upload("application/pdf", b"%PDF-1.4 fake"))
+    assert "what idea does it test" in reply and not calls
+    reply = say(ctx, IDEA)
+    assert "Verdict" in reply and calls == [(IDEA, "application/pdf", 13)]

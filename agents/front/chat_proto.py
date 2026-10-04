@@ -64,6 +64,7 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
         elif isinstance(item, TextContent):
             texts.append(item.text)
         elif isinstance(item, ResourceContent):
+            ctx.logger.info(f"Resource received: {item.resource_id}")
             try:
                 external_storage = ExternalStorage(
                     identity=ctx.agent.identity,

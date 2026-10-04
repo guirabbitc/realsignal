@@ -1,7 +1,13 @@
-"""Speech to text with speaker labels. All ElevenLabs calls stay in this module."""
+"""Turn an uploaded file into a transcript: text and PDF are read, audio is transcribed.
+
+All ElevenLabs calls stay in this module.
+"""
+import io
 from typing import Protocol
 
 import httpx
+from pypdf import PdfReader
+from pypdf.errors import PdfReadError
 
 ELEVENLABS_URL = "https://api.elevenlabs.io/v1/speech-to-text"
 ELEVENLABS_MODEL = "scribe_v2"
@@ -51,3 +57,30 @@ class FakeTranscriber:
 
     def transcribe(self, audio: bytes, filename: str, content_type: str) -> str:
         return self._transcript
+
+
+def is_pdf(data: bytes, content_type: str) -> bool:
+    return content_type == "application/pdf" or data[:5] == b"%PDF-"
+
+
+def pdf_to_text(data: bytes) -> str:
+    """Text of every page. A wrapped line has no speaker label, so split.py joins it to its turn."""
+    lines = []
+    try:
+        for page in PdfReader(io.BytesIO(data)).pages:
+            lines += [line.strip() for line in (page.extract_text() or "").splitlines()]
+    except PdfReadError as ex:
+        raise ValueError(f"Could not read the PDF: {ex}") from ex
+    text = "\n".join(line for line in lines if line)
+    if not text:
+        raise ValueError("No text found in the PDF. A scanned PDF has only images; export it as text first.")
+    return text
+
+
+def file_to_transcript(data: bytes, filename: str, content_type: str, transcriber: Transcriber) -> str:
+    """Read the transcript out of an upload, whatever kind of file it is."""
+    if is_pdf(data, content_type):
+        return pdf_to_text(data)
+    if content_type.startswith("text/") or filename.lower().endswith((".txt", ".md")):
+        return data.decode("utf-8", errors="replace").strip()
+    return transcriber.transcribe(data, filename, content_type)

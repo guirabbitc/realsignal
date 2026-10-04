@@ -28,8 +28,8 @@ export default async function Home() {
             <textarea name="transcript" rows={8} placeholder={"Interviewer: How do you plan dinner today?\nPriya: Every Sunday I spent two hours on a spreadsheet."} />
           </label>
           <label>
-            Or upload a transcript (.txt) or a recording
-            <input type="file" name="file" accept=".txt,.md,text/plain,audio/*,video/*" />
+            Or upload a transcript (.txt or .pdf) or a recording
+            <input type="file" name="file" accept=".txt,.md,.pdf,text/plain,application/pdf,audio/*,video/*" />
           </label>
           <button type="submit">Analyze</button>
         </form>
