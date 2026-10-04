@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://validate.ai/contracts/analyze.schema.json",
+  "title": "validate.ai analyzer contract",
+  "description": "Request and response of POST /analyze. Single source of truth (SPEC §4 rule 3, §6).",
+  "$defs": {
+    "Kind": { "type": "string", "enum": ["interview", "demo"] },
+    "Category": {
+      "type": "string",
+      "enum": ["commitment", "past_pain", "hypothetical", "compliment", "neutral"]
+    },
+    "Verdict": {
+      "type": "string",
+      "enum": ["keep_going", "narrow_down", "new_angle", "pivot", "need_more_evidence"]
+    },
+    "Probability": { "type": "number", "minimum": 0, "maximum": 1 },
+    "AnalyzeRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["idea", "transcript", "kind"],
+      "properties": {
+        "idea": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "transcript": { "type": "string", "minLength": 1, "maxLength": 80000 },
+        "kind": { "$ref": "#/$defs/Kind" },
+        "interviewee_label": { "type": ["string", "null"], "maxLength": 200 },
+        "audio_url": { "type": "null" }
+      }
+    },
+    "Statement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["position", "speaker", "quote", "founder_question", "category", "category_probs", "p_real", "confidence"],
+      "properties": {
+        "position": { "type": "integer", "minimum": 1 },
+        "speaker": { "type": "string", "const": "customer" },
+        "quote": { "type": "string", "minLength": 1 },
+        "founder_question": { "type": ["string", "null"] },
+        "category": { "$ref": "#/$defs/Category" },
+        "category_probs": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/Probability" }
+        },
+        "p_real": { "$ref": "#/$defs/Probability" },
+        "confidence": { "$ref": "#/$defs/Probability" }
+      }
+    },
+    "AnalyzeResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "score", "verdict", "verdict_confidence", "founder_talk_ratio", "pitched_early", "leading_questions",
+        "statements", "summary", "reasons", "next_questions", "missing_evidence", "model_versions"
+      ],
+      "properties": {
+        "score": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 },
+        "verdict": { "$ref": "#/$defs/Verdict" },
+        "verdict_confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "founder_talk_ratio": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "pitched_early": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "leading_questions": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "statements": { "type": "array", "items": { "$ref": "#/$defs/Statement" } },
+        "summary": { "type": "string" },
+        "reasons": { "type": "array", "items": { "type": "string" } },
+        "next_questions": { "type": "array", "items": { "type": "string" }, "minItems": 3, "maxItems": 3 },
+        "missing_evidence": { "type": ["string", "null"] },
+        "model_versions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["jev", "openai", "rubric", "founder_flags"],
+          "properties": {
+            "jev": { "type": "string" },
+            "openai": { "type": "string" },
+            "rubric": { "type": "string" },
+            "founder_flags": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["talk_ratio", "pitched_early", "leading_questions"],
+              "properties": {
+                "talk_ratio": { "$ref": "#/$defs/Probability" },
+                "pitched_early": { "$ref": "#/$defs/Probability" },
+                "leading_questions": { "$ref": "#/$defs/Probability" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["error"],
+      "properties": {
+        "error": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "message"],
+          "properties": {
+            "code": {
+              "type": "string",
+              "enum": ["bad_key", "unlabelled_transcript", "transcript_too_long", "invalid_request", "jev_failed", "openai_failed", "writer_unverifiable", "timeout"]
+            },
+            "message": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

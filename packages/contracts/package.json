@@ -1,0 +1,7 @@
+{
+  "name": "@validate-ai/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "files": ["analyze.schema.json"],
+  "exports": { "./analyze.schema.json": "./analyze.schema.json" }
+}

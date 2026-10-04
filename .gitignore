@@ -1,0 +1,41 @@
+# Secrets: never committed (FACTORY_RULES.md §5). This repo is public.
+.env
+.env.*
+!.env.example
+*secret*
+*credential*
+*.pem
+*.key
+agents/**/*.seed
+service-account*.json
+.archon/config.yaml
+
+# Real interview transcripts never go in the repo; only synthetic fixtures do.
+transcripts/
+
+# Brief with hidden scenarios: lives in the private sibling repo, never here.
+CLAUDE_CODE_BRIEF.md
+
+# Factory runtime
+.factory/STOP
+.factory/runs/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+.pnpm-store/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Tooling
+.DS_Store
+coverage/
+playwright-report/
+test-results/

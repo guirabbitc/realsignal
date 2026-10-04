@@ -1,0 +1,9 @@
+{
+  "name": "validate-ai",
+  "private": true,
+  "packageManager": "pnpm@11.1.2",
+  "scripts": {
+    "validate": "pnpm --filter web validate && pnpm validate:py",
+    "validate:py": "cd services/analyzer && uv run ruff check . && uv run pytest -q"
+  }
+}

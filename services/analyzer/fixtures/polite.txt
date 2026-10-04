@@ -1,0 +1,12 @@
+Founder: So we're building a WhatsApp bot that takes restaurant reservations automatically, with AI, and it syncs with your calendar. Pretty cool, right?
+Customer: Oh, that sounds like a really cool app. I love the idea, honestly, it's the kind of thing everyone talks about these days.
+Founder: Don't you think restaurants would save a lot of time with something like this?
+Customer: Yeah, definitely, I think a lot of places would find it useful. It's very modern, and people like modern things.
+Founder: Would you use it if it existed?
+Customer: Sure, I'd probably use something like that at some point. I would maybe try it, if it's easy and doesn't take long to set up.
+Founder: And would you pay for it, like 50 dollars a month?
+Customer: Maybe, it depends. I would have to think about it, but it could be worth it for some restaurants, especially the busy ones downtown.
+Founder: Great. Anything else you'd want in it?
+Customer: Not really, it sounds great already. You guys are clearly smart, I'm sure it will do well. Good luck with it, really, I mean it.
+Founder: Thanks so much, this is super encouraging.
+Customer: Of course, happy to help. We have about twelve tables here, so it's a small place, but I'm sure bigger restaurants would love it. Keep me posted on how it goes, I'd love to see what you build.
