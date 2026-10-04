@@ -143,6 +143,20 @@ def test_one_voice_is_reported_as_one_voice():
     assert [s.id for s in result.speakers] == ["speaker_0"] and result.suggested_founder_id == "speaker_0"
 
 
+@pytest.mark.parametrize("name", ["real_pain", "mixed", "polite"])
+def test_a_recorded_scribe_response_gives_the_fixture_turns_and_the_right_guess(name):
+    # Real Scribe responses (2026-10-04) to the text fixtures read by two macOS TTS voices
+    # (scripts/make_tts_audio.py). Every fixture starts with the founder, who asks the questions.
+    raw = json.loads((AUDIO / f"{name}.tts.scribe.json").read_text())
+    result = to_result(raw, "scribe_v2")
+    fixture = split_transcript((AUDIO.parents[2] / "fixtures" / f"{name}.txt").read_text(), 80000)
+    founder = result.turns[0].speaker_id
+    assert len(result.speakers) == 2
+    assert result.suggested_founder_id == founder
+    assert [t.speaker_id == founder for t in result.turns] == [t.speaker == "founder" for t in fixture.turns]
+    assert all(t.text and "  " not in t.text and "\n" not in t.text for t in result.turns)
+
+
 def test_the_example_transcript_parses_with_the_expected_turns():
     split = split_transcript((AUDIO / "example.transcript.txt").read_text(), 80000)
     speakers = [t.speaker for t in split.turns]

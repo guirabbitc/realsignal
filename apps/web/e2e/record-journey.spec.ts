@@ -34,7 +34,8 @@ test("record → stop → use it → confirm the voice → the transcript lands 
   await page.getByLabel(/knows this conversation is being recorded/).check();
   await start.click();
   await expect(page.getByText("Recording", { exact: true })).toBeVisible();
-  await page.waitForTimeout(3_000);
+  // With E2E_REAL=1, record the whole fake-mic file (E2E_RECORD_SECONDS) so both voices are heard.
+  await page.waitForTimeout(Number(process.env.E2E_RECORD_SECONDS ?? 3) * 1000);
   await page.getByRole("button", { name: "Stop" }).click();
   await expect(page.locator("audio")).toBeVisible();
   const live = await page.evaluate(() =>
@@ -46,11 +47,14 @@ test("record → stop → use it → confirm the voice → the transcript lands 
     page.waitForRequest("**/api/transcribe"),
     page.getByRole("button", { name: "Use this recording" }).click(),
   ]);
-  const sent = request.postDataBuffer()!.toString("latin1");
-  expect(sent).toContain(`name="idea_id"\r\n\r\n${ideaId}`);
-  expect(sent).toContain('name="consent"\r\n\r\ntrue');
-  expect(sent).toContain('name="num_speakers"\r\n\r\n2');
-  expect(sent).toMatch(/filename="recording\.(webm|m4a)"/);
+  // Playwright keeps the body only of requests it intercepts, so the fields are checked in the mocked run.
+  if (!real) {
+    const sent = request.postDataBuffer()!.toString("latin1");
+    expect(sent).toContain(`name="idea_id"\r\n\r\n${ideaId}`);
+    expect(sent).toContain('name="consent"\r\n\r\ntrue');
+    expect(sent).toContain('name="num_speakers"\r\n\r\n2');
+    expect(sent).toMatch(/filename="recording\.(webm|m4a)"/);
+  }
 
   await expect(page.getByText("Which voice is you?")).toBeVisible({ timeout: real ? 290_000 : 15_000 });
   await expect(page.getByRole("group", { name: /Which voice is you/ }).getByRole("radio")).toHaveCount(2);

@@ -11,7 +11,7 @@ const AUDIO_DIR = process.env.E2E_AUDIO_DIR ?? RECORDINGS;
 test.skip(process.env.E2E_REAL !== "1", "Real ElevenLabs + Jev + OpenAI journey: run with E2E_REAL=1 (costs money).");
 test.skip(!audioEnabled, "Audio input is off (AUDIO_INPUT_ENABLED).");
 
-for (const fixture of ["real_pain", "polite"] as const) {
+for (const fixture of ["real_pain", "mixed", "polite"] as const) {
   const audioFile = resolve(AUDIO_DIR, `${fixture}.m4a`);
 
   test(`upload ${fixture} audio → confirm my voice → same band as the text fixture`, async ({ page }) => {

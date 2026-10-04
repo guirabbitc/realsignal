@@ -10,20 +10,36 @@ Working plan and status for the `worktree-audio-input` branch. A fresh session r
 | 1. Analyzer `POST /transcribe` | **done** | ruff pass, pytest 84/84. The Scribe response in `tests/recordings/audio/synthetic.scribe.json` is **synthetic** (docs shape) until a real recording exists |
 | 2. Contract and web API | **done** | lint, typecheck, Vitest 49/49, pytest 91/91. `/api/transcribe` streams a heartbeat (Q-B adopted) |
 | 3. UI | **done** | lint, typecheck, Vitest 55/55; Playwright: record journey + real text journey pass with the flag on, text journey passes with it off; 22 screens in `docs/features/audio-input/screens/`; no `ELEVENLABS`/`xi-api-key` in the build output |
-| 4. Real round trip | **blocked, partly run** | Text fixtures through the real analyzer: polite 0 `pivot`, mixed 59 `narrow_down`, real_pain 97 `keep_going` (order holds, all in band). The audio round trip needs `ELEVENLABS_API_KEY` and the team-recorded audio |
+| 4. Real round trip | **done on TTS audio; human recordings pending** | Real ElevenLabs + Jev + OpenAI. Audio lands in the same band and verdict as text for all three fixtures (table below) |
 | 5. Ship (draft PR) | **done** | Two stacked draft PRs (API behind the flag, then UI). Not merged |
 
-### To finish Phase 4
+### Phase 4 results (2026-10-04)
 
-1. Put `ELEVENLABS_API_KEY` in `services/analyzer/.env` (this worktree).
-2. Put the team recordings in `services/analyzer/tests/recordings/audio/`: `real_pain.m4a`, `polite.m4a`, and `real_pain.wav` for the fake mic.
-3. Record a real Scribe response once from `real_pain.m4a` and commit it next to the synthetic one (minified). Point the cross-check (`example.transcribe.json` / `example.transcript.txt`) at it.
-4. Run, with the analyzer on 8100:
+The team recordings don't exist yet, so `scripts/make_tts_audio.py` read each text fixture with two macOS voices: Daniel for the founder, Samantha for the customer. **Synthetic voices are easier to separate than real ones, so this is weaker evidence than a human recording.** The audio files are not committed. The three raw Scribe responses are, minified, as `tests/recordings/audio/*.tts.scribe.json`, and pytest replays them.
+
+| Fixture | Audio | Scribe time | Voices / founder guess | Word match vs `.txt` | Text: score, verdict | Audio: score, verdict | Band |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| real_pain | 75 s | 1.9 s | 2 / right | 97.2 % | 97 `keep_going` | 97 `keep_going` | > 70, `keep_going` ✓ |
+| mixed | 69 s | 2.4 s | 2 / right | 99.5 % | 59 `narrow_down` | 58 `narrow_down` | 40–65 ✓ |
+| polite | 77 s | 2.4 s | 2 / right | 98.9 % | 0 `pivot` | 0 `pivot` | < 30 ✓ |
+
+- **Transcription differences** are only number and spelling formats, never meaning: "900" → "nine hundred", "300" → "three hundred", "50 dollars" → "$50", "twelve" → "12", "cancelled" → "canceled", "in to" → "into", "Paulo" → "Paolo", "front and" → "front end". Every quote in the read-outs is verbatim against the audio transcript the founder confirmed.
+- **Journeys run for real:**
+  - `upload-audio-real`: 3 of 3 pass.
+  - `record-journey` with the fake mic playing `real_pain.wav` for 80 s: pass, and the review shows 2 voices.
+  - Each full journey takes 6–9 s end to end; Scribe takes ~3 s of that.
+- **Cost of the run:** about 520 s of audio sent to Scribe (3 direct calls + 3 uploads + 1 recording). At the listed $0.22–0.27 per hour that is about **US$0.04**. Jev and OpenAI ran 6 analyses on top.
+- **Railway:** `ELEVENLABS_API_KEY` is set on the production `analyzer` service with `--skip-deploys`, so nothing redeployed. It takes effect on the next deploy. `AUDIO_INPUT_ENABLED` is **not** set on production `web`: turn it on only after #7 and #8 are merged and deployed.
+
+### Still to do with human recordings
+
+1. Two people read `real_pain.txt` and `polite.txt` (real mic). Save `real_pain.m4a`, `polite.m4a` and `real_pain.wav`.
+2. Run, with the analyzer on 8100 and the key in its `.env`:
    ```bash
-   E2E_REAL=1 pnpm --filter web e2e upload-audio-real
-   E2E_REAL=1 E2E_FAKE_AUDIO=$PWD/services/analyzer/tests/recordings/audio/real_pain.wav pnpm --filter web e2e record-journey
+   E2E_REAL=1 E2E_AUDIO_DIR=/path/to/recordings pnpm --filter web e2e upload-audio-real
+   E2E_REAL=1 E2E_RECORD_SECONDS=90 E2E_FAKE_AUDIO=/path/to/recordings/real_pain.wav pnpm --filter web e2e record-journey
    ```
-   The upload spec prints transcription time, the built transcript and score/verdict per fixture. Compare the transcript with the `.txt`, and never loosen a band.
+3. If a band breaks, report it with the transcript diff. Never loosen a band.
 
 ### Environment (this worktree only)
 
