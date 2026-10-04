@@ -121,6 +121,7 @@ def render(result: AnalyzeResponse) -> str:
     )[:TOP_QUOTES]
     lines = [
         f"**Verdict: {VERDICT_TEXT[result.verdict.value]}**",
+        "",  # a blank line: chat clients render a single newline as a space
         f"Demand score: {result.score:g} / 100",
         "",
         result.summary,
