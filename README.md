@@ -1,5 +1,8 @@
 # validate.ai
 
+![tag:innovationlab](https://img.shields.io/badge/innovationlab-3D8BD3)
+![tag:hackathon](https://img.shields.io/badge/hackathon-5F43F1)
+
 **An AI coach for customer interviews.** Paste the transcript of a discovery interview or demo, and validate.ai tells you which things the customer said were **real signals of interest** and which were **just politeness**. Then it gives a verdict on what to do next, with the exact quotes to prove it.
 
 > Built at MHacks 2026 (Actually Intelligent + Fetch.ai tracks) by Guilherme Coelho and Murilo Guazzelli. Working name; the final name is open.
@@ -20,6 +23,34 @@ Customers are polite. "Cool idea" and "I'd use that" feel like validation, but t
 4. **Verdict** (Jev, the mean of 3 calls): keep going, narrow down, try a new angle, or pivot. A **confidence gate** turns it into "not enough evidence yet" when the evidence is thin.
 5. **Write** (OpenAI): a plain-English read-out with the reasons and the next 3 questions to ask. It cannot change the verdict.
 6. **Verify** (Python): any quote in the read-out that is not verbatim in the transcript is dropped.
+
+## The agents on Fetch.ai (ASI:One)
+
+The same analysis runs as a team of four agents, registered on Agentverse and reachable in ASI:One through the Agent Chat Protocol. The whole workflow happens in one ASI:One conversation: say hi to **valiDate**, give your idea in one sentence, paste the interview, and get the verdict, the score, the quotes and the next questions.
+
+| Agent | Job | Address |
+| --- | --- | --- |
+| valiDate | Talks to the founder, plans the steps, merges the answers | `agent1q04gnfnfl0sl0qusvte6rd0gnzhvtvhzpjceugx9p07wuny8lswlvj0g4mn` |
+| valiDate Intake | Works out who is the interviewer and who is the customer | `agent1q0exnynml2849c0kmafyth4mem8xgs9fzx5yqmyzep8uc7za7lmyssrqeqq` |
+| valiDate Signal Analyst | Judges each customer sentence, scores the interview, picks the verdict | `agent1q08gppxzdjsvrczrmref9gmd96lpawgdwhx6vpdv6vqc688j72rgutk3qar` |
+| valiDate Strategist | Writes the read-out and the next questions | `agent1qve9d7cjnn60y8v9ajt5gdz27z0zwvv880q4a04ge3jg4yx2p55hw7hpkqc` |
+
+- **Orchestration:** valiDate calls Intake, then the Signal Analyst, then the Strategist, with typed agent-to-agent messages, and merges their answers. If a teammate does not answer in 45 s, it runs that step itself; it never invents a verdict.
+- **Each specialist also works on its own** in ASI:One, through the same Chat Protocol.
+- **In the web app:** the "Ask the agents" window on every page, and the "Chat with the agents" page, are the same conversation with the same agents.
+- **Measured:** a fifth agent, the tester, plays a founder against the team and scores its answers against an answer key.
+
+Run them:
+
+```bash
+cp .env.example agents/.env                                   # keep the agents section; fill in the keys
+uv run --project agents python agents/scripts/gen_seeds.py    # fills the seeds, prints the addresses
+uv run --project agents python agents/run_team.py             # all four; Ctrl+C stops them
+```
+
+Details, tests and the tester agent: [`agents/README.md`](agents/README.md).
+
+External services used: [Agentverse](https://agentverse.ai) and [ASI:One](https://asi1.ai) (Fetch.ai), the [uAgents](https://github.com/fetchai/uAgents) framework, Jev by [TypeSafe AI](https://typesafe.ai) (the judgments), and the [OpenAI API](https://platform.openai.com) (the read-out text).
 
 ## Repository
 
