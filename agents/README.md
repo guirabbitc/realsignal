@@ -25,6 +25,8 @@ The first time, open each agent's inspector link from the log and choose Connect
 
 The web app's "Chat with the agents" page posts to `/api/agent-chat`, which calls the front agent's REST endpoint `POST /chat` with `AGENT_CHAT_KEY`. It is the same conversation as in ASI:One, so it goes through the same specialists.
 
+The same chat is also a small window on every other page (`components/chat/ChatWidget.tsx`), opened with the "Ask the agents" button at the bottom right. Set `NEXT_PUBLIC_AGENT_PROFILE_URL` to the front agent's Agentverse page to show a link to it in the window.
+
 That endpoint is served on the front agent's own port, not through the Agentverse mailbox. The web app must be able to reach it: set `AGENT_URL` in `apps/web/.env` (`http://localhost:8001` locally). A web app deployed on Railway cannot reach an agent on a laptop without a tunnel.
 
 ## Test
