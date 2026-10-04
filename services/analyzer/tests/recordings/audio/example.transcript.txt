@@ -1,0 +1,7 @@
+Customer: Hey, thanks for coming in.
+Founder: Thanks for having me. How do you handle reservations today?
+Customer: Honestly it's a mess. I pay someone $300 a month to do it by hand.
+Founder: When did that last go wrong?
+Customer: Last Friday. We double-booked six tables.
+Founder: What did that cost you?
+Customer: About $400 in comped meals.

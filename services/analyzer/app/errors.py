@@ -36,3 +36,32 @@ class WriterUnverifiable(AnalyzerError):
 
 class AnalysisTimeout(AnalyzerError):
     code, status = "timeout", 504
+
+
+# POST /transcribe (packages/contracts/transcribe.schema.json)
+
+
+class AudioTooLarge(AnalyzerError):
+    code, status = "audio_too_large", 413
+
+
+class EmptyAudio(AnalyzerError):
+    code, status = "empty_audio", 422
+
+
+class NoSpeech(AnalyzerError):
+    code, status = "no_speech", 422
+
+
+class TranscriptionNotConfigured(AnalyzerError):
+    code, status = "transcription_not_configured", 503
+
+
+class TranscriptionFailed(AnalyzerError):
+    """`reason` is a class (rate_limited, upstream_error, timeout, rejected), never the provider's raw message."""
+
+    code, status = "transcription_failed", 502
+
+    def __init__(self, reason: str):
+        super().__init__(f"Transcription failed ({reason}).", status=504 if reason == "timeout" else None)
+        self.reason = reason

@@ -87,3 +87,61 @@ class ErrorResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     error: ErrorDetail
+
+
+# POST /transcribe. Must match packages/contracts/transcribe.schema.json (tested).
+
+TranscribeErrorCode = Literal[
+    "bad_key",
+    "invalid_request",
+    "audio_too_large",
+    "empty_audio",
+    "no_speech",
+    "transcription_failed",
+    "transcription_not_configured",
+]
+TranscribeFailureReason = Literal["rate_limited", "upstream_error", "timeout", "rejected"]
+
+
+class TranscribeTurn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    speaker_id: str = Field(min_length=1)
+    text: str = Field(min_length=1)
+    start: float | None = Field(ge=0)
+    end: float | None = Field(ge=0)
+
+
+class TranscribeSpeaker(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(min_length=1)
+    turns: int = Field(ge=1)
+    words: int = Field(ge=0)
+    seconds: float = Field(ge=0)
+    sample: list[str] = Field(min_length=1, max_length=2)
+
+
+class TranscribeResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    duration_s: float | None = Field(ge=0)
+    language_code: str | None
+    model: str = Field(min_length=1)
+    speakers: list[TranscribeSpeaker] = Field(min_length=1)
+    turns: list[TranscribeTurn] = Field(min_length=1)
+    suggested_founder_id: str = Field(min_length=1)
+
+
+class TranscribeErrorDetail(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: TranscribeErrorCode
+    message: str
+    reason: TranscribeFailureReason | None = None
+
+
+class TranscribeErrorResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    error: TranscribeErrorDetail
