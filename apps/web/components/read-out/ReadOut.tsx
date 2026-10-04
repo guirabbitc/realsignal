@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { apiGet, type IdeaDetail } from "@/components/api";
 import { useReportCurrentIdea } from "@/components/shell/current-idea";
+import { Breadcrumb, LoadFailed, Notice, Skeleton, Steps } from "@/components/ui/feedback";
 
 import { MissingEvidence, MistakesAndReasons, NextQuestions, TopQuotes, VerdictCard } from "./Sections";
 import { Transcript } from "./Transcript";
@@ -18,47 +20,6 @@ type Load =
   | { state: "error" }
   // `fresh`: this view saw the interview go from processing to done, so the reveal animates.
   | { state: "ready"; interview: InterviewResponse; fresh: boolean };
-
-interface IdeaDetail {
-  one_liner: string;
-  interviews: { id: string; kind: "interview" | "demo"; interviewee_label: string | null; created_at: string }[];
-}
-
-function Steps({ current }: { current: number }) {
-  return (
-    <ol className="m-0 flex list-none flex-wrap items-center gap-2.5 p-0">
-      {["Upload", "Processing", "Read-out"].map((label, i) => (
-        <li key={label} className="flex items-center gap-2.5" aria-current={i === current ? "step" : undefined}>
-          <span
-            className={`flex size-[30px] items-center justify-center rounded-full border-[2.5px] border-ink text-[13px] font-extrabold ${
-              i < current ? "bg-brand text-white" : i === current ? "bg-ink text-white" : "bg-white text-ink"
-            }`}
-          >
-            {i < current ? "✓" : i + 1}
-          </span>
-          <span className={`text-[15px] ${i === current ? "font-bold" : "font-medium"}`}>{label}</span>
-          {i < 2 && <span aria-hidden="true" className="w-7 border-t-[2.5px] border-ink" />}
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-function Skeleton() {
-  return (
-    <div aria-hidden="true" className="card flex flex-col gap-4 p-7">
-      <span className="h-3.5 w-[90px] rounded-[7px] bg-line motion-safe:animate-pulse-soft" />
-      <div className="flex items-center gap-[18px]">
-        <span className="size-11 shrink-0 rounded-[10px] bg-line motion-safe:animate-pulse-soft" />
-        <span className="h-[38px] flex-1 rounded-[10px] bg-line motion-safe:animate-pulse-soft" />
-        <span className="h-[50px] w-[70px] rounded-[10px] bg-line motion-safe:animate-pulse-soft" />
-      </div>
-      <span className="h-3.5 w-[70%] rounded-[7px] bg-line motion-safe:animate-pulse-soft" />
-      <span className="h-3.5 w-[85%] rounded-[7px] bg-line motion-safe:animate-pulse-soft" />
-      <span className="h-3.5 w-[55%] rounded-[7px] bg-line motion-safe:animate-pulse-soft" />
-    </div>
-  );
-}
 
 const PIPELINE = [
   ["Who said what", "Splitting the transcript into your lines and theirs."],
@@ -87,18 +48,6 @@ function Processing() {
       </div>
       <Skeleton />
     </>
-  );
-}
-
-function Notice({ title, children, tone = "plain" }: { title: string; children: React.ReactNode; tone?: "plain" | "danger" }) {
-  return (
-    <div
-      role={tone === "danger" ? "alert" : undefined}
-      className={`flex flex-col gap-2.5 rounded-[22px] border-[2.5px] bg-white p-6 ${tone === "danger" ? "border-danger" : "border-ink"}`}
-    >
-      <strong className={`text-[17px] ${tone === "danger" ? "text-danger" : ""}`}>{title}</strong>
-      {children}
-    </div>
   );
 }
 
@@ -146,10 +95,10 @@ export function ReadOut({ id }: { id: string }) {
   useEffect(() => {
     if (!ideaId) return;
     let cancelled = false;
-    fetch(`/api/ideas/${ideaId}`, { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((body: IdeaDetail | null) => !cancelled && setIdea(body))
-      .catch(() => {});
+    apiGet<IdeaDetail>(`/api/ideas/${ideaId}`).then(
+      (body) => !cancelled && setIdea(body),
+      () => {},
+    );
     return () => {
       cancelled = true;
     };
@@ -171,21 +120,13 @@ export function ReadOut({ id }: { id: string }) {
   }
   if (load.state === "error") {
     return (
-      <Notice title="We couldn’t load this interview." tone="danger">
-        <span className="text-[15px] text-ink-soft">Check your connection and try again.</span>
-        <div>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => {
-              setLoad({ state: "loading" });
-              setAttempt((a) => a + 1);
-            }}
-          >
-            Try again
-          </button>
-        </div>
-      </Notice>
+      <LoadFailed
+        what="this interview"
+        onRetry={() => {
+          setLoad({ state: "loading" });
+          setAttempt((a) => a + 1);
+        }}
+      />
     );
   }
 
@@ -200,15 +141,7 @@ export function ReadOut({ id }: { id: string }) {
 
   return (
     <section aria-label="Read-out" className="flex flex-col gap-6">
-      <nav aria-label="Breadcrumb" className="flex flex-wrap gap-2 text-sm text-muted">
-        <Link href="/ideas" className="text-muted">
-          My ideas
-        </Link>
-        <span aria-hidden="true">/</span>
-        <Link href={ideaHref} className="max-w-[520px] truncate text-ink">
-          {idea?.one_liner ?? "Idea"}
-        </Link>
-      </nav>
+      <Breadcrumb ideaId={interview.idea_id} ideaText={idea?.one_liner} />
 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-2">
