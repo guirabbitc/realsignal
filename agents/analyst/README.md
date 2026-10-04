@@ -12,11 +12,17 @@ The judging step of the ValiDate team. Given an idea and an interview transcript
 
 It measures evidence of demand in what was said. It does not judge whether anyone is being honest.
 
-This agent is called by the ValiDate front agent. It has no chat interface: to analyze an interview, talk to **ValiDate**.
+## How to use it
+
+**In ASI:One:** say hi. It asks what idea the interview tests, then for the transcript, and replies with the verdict, the score and every interviewee sentence with its label.
+
+**From another agent:** send a `JudgeTranscript` (see Messages). This is how the ValiDate front agent and the Strategist call it.
+
+For the summary and next steps as well, talk to **ValiDate**.
 
 ## Messages
 
-Protocol: `ValiDateAnalyst` 0.1.0
+This agent speaks two protocols: `AgentChatProtocol` (chat, for ASI:One) and `ValiDateAnalyst` 0.1.0 (typed messages, below).
 
 | Direction | Message | Fields |
 | --- | --- | --- |

@@ -9,6 +9,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from contracts import AnalyzeResponse  # noqa: E402
+from chat import Upload  # noqa: E402
 from front import flow  # noqa: E402
 
 TRANSCRIPT = "Interviewer: How do you plan dinner?\nPriya: Last week I paid for a meal kit."
@@ -103,7 +104,7 @@ def test_transcript_first_is_kept_until_the_idea_arrives(calls):
 def test_uploaded_text_file_is_analyzed(calls):
     ctx = FakeCtx()
     say(ctx, IDEA)
-    reply = say(ctx, upload=flow.Upload("text/plain", TRANSCRIPT.encode()))
+    reply = say(ctx, upload=Upload("text/plain", TRANSCRIPT.encode()))
     assert "Verdict" in reply and calls == [(IDEA, TRANSCRIPT)]
 
 
@@ -136,13 +137,13 @@ def test_specialists_down_falls_back_to_the_analyzer(calls, monkeypatch):
 def test_pdf_upload_is_sent_to_the_analyzer_as_a_file(calls):
     ctx = FakeCtx()
     say(ctx, IDEA)
-    reply = say(ctx, upload=flow.Upload("application/pdf", b"%PDF-1.4 fake"))
+    reply = say(ctx, upload=Upload("application/pdf", b"%PDF-1.4 fake"))
     assert "Verdict" in reply and calls == [(IDEA, "application/pdf", 13)]
 
 
 def test_pdf_sent_before_the_idea_is_kept(calls):
     ctx = FakeCtx()
-    reply = say(ctx, upload=flow.Upload("application/pdf", b"%PDF-1.4 fake"))
+    reply = say(ctx, upload=Upload("application/pdf", b"%PDF-1.4 fake"))
     assert "what idea does it test" in reply and not calls
     reply = say(ctx, IDEA)
     assert "Verdict" in reply and calls == [(IDEA, "application/pdf", 13)]

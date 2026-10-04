@@ -5,6 +5,7 @@ process, and plays a founder: says hi, gives the idea, sends a fixture transcrip
 
     uv run --project agents python agents/tests/smoke_chat.py direct
     uv run --project agents python agents/tests/smoke_chat.py specialists
+    uv run --project agents python agents/tests/smoke_chat.py strategist   # chat with the Strategist directly
 
 File uploads are not covered here; test those in ASI:One.
 """
@@ -26,10 +27,19 @@ ANALYZER_PORT = 8765
 os.environ["ANALYZER_URL"] = f"http://127.0.0.1:{ANALYZER_PORT}"
 os.environ["ANALYZER_SECRET"] = "smoke-secret"
 os.environ["FRONT_USE_SPECIALISTS"] = "1" if MODE == "specialists" else "0"
+# Which agent the fake founder talks to, and what a finished answer contains.
+TARGET, DONE = ("STRATEGIST", "Judged by the ValiDate Signal Analyst") if MODE == "strategist" else ("FRONT", "Verdict")
 
 import common  # noqa: E402,F401  (certificates; .env does not override the values above)
 from front.chat_proto import chat_proto  # noqa: E402
-from specialists import analyst_proto, intake_proto, strategist_proto  # noqa: E402
+from specialists import (  # noqa: E402
+    analyst_chat_proto,
+    analyst_proto,
+    intake_chat_proto,
+    intake_proto,
+    strategist_chat_proto,
+    strategist_proto,
+)
 from uagents import Agent, Bureau, Context, Protocol  # noqa: E402
 from uagents_core.contrib.protocols.chat import (  # noqa: E402
     ChatAcknowledgement,
@@ -46,11 +56,18 @@ front = Agent(name="front-smoke", seed="realsignal-smoke-front")
 front.include(chat_proto)
 
 specialists = []
-for prefix, proto in (("INTAKE", intake_proto), ("ANALYST", analyst_proto), ("STRATEGIST", strategist_proto)):
+addresses = {"FRONT": front.address}
+for prefix, proto, chat_proto_ in (
+    ("INTAKE", intake_proto, intake_chat_proto),
+    ("ANALYST", analyst_proto, analyst_chat_proto),
+    ("STRATEGIST", strategist_proto, strategist_chat_proto),
+):
     agent = Agent(name=f"{prefix.lower()}-smoke", seed=f"realsignal-smoke-{prefix.lower()}")
     agent.include(proto)
-    os.environ[f"{prefix}_AGENT_ADDRESS"] = agent.address
+    agent.include(chat_proto_)
+    os.environ[f"{prefix}_AGENT_ADDRESS"] = addresses[prefix] = agent.address
     specialists.append(agent)
+TARGET_ADDRESS = addresses[TARGET]
 
 client = Agent(name="client-smoke", seed="realsignal-smoke-client")
 client_proto = Protocol(spec=chat_protocol_spec)
@@ -67,7 +84,7 @@ def finish(code: int) -> None:
 
 @client.on_event("startup")
 async def say_hi(ctx: Context):
-    await ctx.send(front.address, chat(StartSessionContent(type="start-session"), TextContent(type="text", text="hi")))
+    await ctx.send(TARGET_ADDRESS, chat(StartSessionContent(type="start-session"), TextContent(type="text", text="hi")))
 
 
 @client_proto.on_message(ChatMessage)
@@ -76,11 +93,11 @@ async def on_reply(ctx: Context, sender: str, msg: ChatMessage):
         if not isinstance(item, TextContent):
             continue
         print(f"REPLY:\n{item.text}\n", flush=True)
-        if "what idea are you testing" in item.text:
-            await ctx.send(front.address, chat(TextContent(type="text", text=IDEA)))
+        if "One sentence is enough" in item.text and "Got" not in item.text:
+            await ctx.send(TARGET_ADDRESS, chat(TextContent(type="text", text=IDEA)))
         elif "Now send me the interview" in item.text:
-            await ctx.send(front.address, chat(TextContent(type="text", text=TRANSCRIPT)))
-        elif "Verdict" in item.text:
+            await ctx.send(TARGET_ADDRESS, chat(TextContent(type="text", text=TRANSCRIPT)))
+        elif DONE in item.text:
             print(f"PASS ({MODE})", flush=True)
             finish(0)
         else:

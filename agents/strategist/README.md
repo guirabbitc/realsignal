@@ -10,11 +10,17 @@ The last step of the ValiDate team. Given an idea and a judged interview, it wri
 
 It never changes a label, the score or the verdict. Those are final when they reach it; it only writes.
 
-This agent is called by the ValiDate front agent. It has no chat interface: to analyze an interview, talk to **ValiDate**.
+## How to use it
+
+**In ASI:One:** say hi. It asks what idea the interview tests, then for the transcript. It asks the Signal Analyst agent to judge the interview, then replies with the summary and next steps.
+
+**From another agent:** send a `WriteUp` with an already judged interview (see Messages). This is how the ValiDate front agent calls it.
+
+For the verdict, quotes and next steps in one reply, talk to **ValiDate**.
 
 ## Messages
 
-Protocol: `ValiDateStrategist` 0.1.0
+This agent speaks two protocols: `AgentChatProtocol` (chat, for ASI:One) and `ValiDateStrategist` 0.1.0 (typed messages, below).
 
 | Direction | Message | Fields |
 | --- | --- | --- |

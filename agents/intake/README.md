@@ -9,11 +9,17 @@ The first step of the ValiDate team. It takes whatever the founder sent and retu
 - A PDF is read and its text extracted.
 - A recording is transcribed with speaker labels.
 
-This agent is called by the ValiDate front agent. It has no chat interface: to analyze an interview, talk to **ValiDate**.
+## How to use it
+
+**In ASI:One:** send the interview as a PDF or a recording, or paste the text. It replies with the transcript.
+
+**From another agent:** send an `IntakeRequest` (see Messages). This is how the ValiDate front agent calls it.
+
+For a full verdict on an interview, talk to **ValiDate**.
 
 ## Messages
 
-Protocol: `ValiDateIntake` 0.1.0
+This agent speaks two protocols: `AgentChatProtocol` (chat, for ASI:One) and `ValiDateIntake` 0.1.0 (typed messages, below).
 
 | Direction | Message | Fields |
 | --- | --- | --- |

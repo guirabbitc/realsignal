@@ -33,10 +33,14 @@ realsignal/
       fixtures/             mock interviews
       tests/
   agents/                   uAgents for ASI:One; they call the analyzer (hackathon) (uv)
-    front/                  agent.py, chat_proto.py (Chat Protocol), flow.py (plans and calls)
-    */README.md             each agent's Agentverse profile, published on mailbox connect
+    front/                  agent.py, chat_proto.py, flow.py (plans the steps and calls the team)
     intake/ analyst/ strategist/   thin specialists, one analyzer stage each
-    specialists.py          the three specialist protocols
+    */README.md             each agent's Agentverse profile, published on mailbox connect
+    specialists.py          each specialist's typed protocol and its chat handler
+    chat.py                 Chat Protocol factory (from Fetch's openai-agent template), shared by all agents
+    conversation.py         the idea-then-interview conversation, shared by all agents
+    team.py                 ask another agent with ctx.send_and_receive
+    render.py               reply text (presentation only)
     analyzer_client.py      the only place agents call the analyzer
     models.py               agent-to-agent messages
     contracts.py            GENERATED Pydantic models

@@ -32,7 +32,7 @@ You can send more interviews for the same idea, or write `new idea: ...` to test
 
 ## How it works
 
-ValiDate is a team of four agents. This one plans the work and talks to you. It hands the interview to Intake, then to the Signal Analyst, then to the Strategist, and merges their answers into one reply. If a teammate does not answer, it finishes the job itself.
+ValiDate is a team of four agents. This one plans the work and talks to you. It hands the interview to Intake, then to the Signal Analyst, then to the Strategist, and merges their answers into one reply. If a teammate does not answer, it finishes the job itself. Each teammate can also be used on its own in ASI:One.
 
 ## The ValiDate team
 
