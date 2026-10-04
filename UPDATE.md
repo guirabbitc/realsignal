@@ -2,7 +2,7 @@
 
 Read this first if you (or your coding agent) are new to the repo. It says what exists, what was verified, and what is left. The rules the code must follow are in `CLAUDE.md`; run instructions are in `README.md`. Add a changelog entry here whenever the code changes.
 
-Last updated: 2026-10-03, after the migration to the finalized stack.
+Last updated: 2026-10-04, after the first successful test in ASI:One.
 
 ## What we are building
 
@@ -37,13 +37,13 @@ Dropped from the hackathon plan for now: the Market Check agent, cross-interview
 | Analyzer | Done, on fakes | `pytest`: 17 tests, offline |
 | Database | Done | `docker compose up`, `pnpm db:migrate` on an empty database: 5 tables |
 | Web app | Done | Build and typecheck pass. Fixture upload goes `processing` → `done` and the result page shows sentences, score and verdict. With the analyzer stopped, the row goes `failed` with the error. |
-| Front agent | Done locally | Smoke test in `direct` mode |
+| Front agent | Done, works in ASI:One (fake mode) | Smoke test in `direct` mode; manual test in ASI:One on 2026-10-04 |
 | Specialist agents | Done locally | Smoke test in `specialists` mode gives the same result as `direct` |
 
 **Not verified yet:**
 
 - **Live AI calls.** The ElevenLabs, Jev and OpenAI clients were written from their docs and tested against mocked HTTP only. No API keys were available. Everything seen so far ran in fake mode, where labels come from keyword rules.
-- **ASI:One.** No agent has had its mailbox connected. Chatting from ASI:One and uploading a file there are untested.
+- **ASI:One, partly.** Verified by Murilo on 2026-10-04 with the front agent in direct mode and the analyzer in fake mode: the mailbox is connected, the guided conversation works, and a transcript returns a verdict (real-pain fixture: keep going; polite fixture: pivot). Audio upload is untested.
 - **Agents over the network.** The specialists were chained inside one process. Four separate processes talking through Agentverse are untested.
 - **Railway.** No deployment config exists.
 
@@ -61,7 +61,7 @@ Dropped from the hackathon plan for now: the Market Check agent, cross-interview
 ## Next
 
 1. Put `ELEVENLABS_API_KEY`, `JEV_API_KEY` and `OPENAI_API_KEY` in `.env`, set `ANALYZER_FAKE_CLIENTS=` (empty), and run one real interview through the web app. Expect to adjust the Jev instructions and the writer prompt.
-2. ASI:One check: the mailbox is connected and the agent answers in ASI:One. Still to confirm there: a pasted transcript gives a verdict, and a `.txt` upload works.
+2. ASI:One: the front agent works there in fake mode. Repeat the check once the analyzer is live.
 3. Connect the three specialists, set `FRONT_USE_SPECIALISTS=1`, repeat.
 4. Decide audio storage and add auth.
 5. Railway: three services (web, analyzer, Postgres), analyzer on the private network.

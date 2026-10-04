@@ -215,7 +215,7 @@ async def handle_founder_input(ctx: Context, sender: str, texts: list[str], uplo
         return await _analyze(ctx, idea, transcript, None if transcript else audio)
 
     if new_idea:
-        return f'Got it. The idea: "{idea}".\n\n{ASK_TRANSCRIPT}'
+        return f'Got it. The idea: "{idea}"\n\n{ASK_TRANSCRIPT}'
     if idea and small_talk:
-        return f'I have your idea: "{idea}".\n\n{ASK_TRANSCRIPT}\n\nTo test a different idea, write `new idea: ...`.'
+        return f'I have your idea: "{idea}"\n\n{ASK_TRANSCRIPT}\n\nTo test a different idea, write `new idea: ...`.'
     return INTRO
