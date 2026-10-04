@@ -114,6 +114,7 @@ Also:
   - The repo is **public**: hidden scenarios and real transcripts never go in it.
   - Jev is not deterministic, so the verdict averages 3 calls (SPEC §0.2).
   - Railway's `web` service builds from the repo root (SPEC §0.4).
+  - Deploys via `railway up` ignore `railway.json`, so build and start commands are set as `RAILPACK_BUILD_CMD` / `RAILPACK_START_CMD` service variables, and `web` runs migrations at start. Once the services are connected to GitHub, set the config-file path so `railway.json` (pre-deploy, healthcheck, watch paths) applies.
 
 ## Incident log
 
