@@ -26,14 +26,15 @@ Customers are polite. "Cool idea" and "I'd use that" feel like validation, but t
 
 ## The agents on Fetch.ai (ASI:One)
 
-The same analysis runs as a team of four agents, registered on Agentverse and reachable in ASI:One through the Agent Chat Protocol. The whole workflow happens in one ASI:One conversation: say hi to **valiDate**, give your idea in one sentence, paste the interview, and get the verdict, the score, the quotes and the next questions.
+The same analysis runs as a team of four agents (plus a tester), registered on Agentverse under Innovation Lab and reachable in ASI:One through the Agent Chat Protocol. The whole workflow happens in one ASI:One conversation: say hi to **valiDate**, give your idea in one sentence, paste the interview, and get the verdict, the score, the quotes and the next questions.
 
 | Agent | Job | Address |
 | --- | --- | --- |
-| valiDate | Talks to the founder, plans the steps, merges the answers | `agent1q04gnfnfl0sl0qusvte6rd0gnzhvtvhzpjceugx9p07wuny8lswlvj0g4mn` |
-| valiDate Intake | Works out who is the interviewer and who is the customer | `agent1q0exnynml2849c0kmafyth4mem8xgs9fzx5yqmyzep8uc7za7lmyssrqeqq` |
-| valiDate Signal Analyst | Judges each customer sentence, scores the interview, picks the verdict | `agent1q08gppxzdjsvrczrmref9gmd96lpawgdwhx6vpdv6vqc688j72rgutk3qar` |
-| valiDate Strategist | Writes the read-out and the next questions | `agent1qve9d7cjnn60y8v9ajt5gdz27z0zwvv880q4a04ge3jg4yx2p55hw7hpkqc` |
+| [valiDate](https://agentverse.ai/agents/details/agent1q04gnfnfl0sl0qusvte6rd0gnzhvtvhzpjceugx9p07wuny8lswlvj0g4mn/profile) | Talks to the founder, plans the steps, merges the answers | `agent1q04gnfnfl0sl0qusvte6rd0gnzhvtvhzpjceugx9p07wuny8lswlvj0g4mn` |
+| [valiDate Intake](https://agentverse.ai/agents/details/agent1q0exnynml2849c0kmafyth4mem8xgs9fzx5yqmyzep8uc7za7lmyssrqeqq/profile) | Works out who is the interviewer and who is the customer | `agent1q0exnynml2849c0kmafyth4mem8xgs9fzx5yqmyzep8uc7za7lmyssrqeqq` |
+| [valiDate Signal Analyst](https://agentverse.ai/agents/details/agent1q08gppxzdjsvrczrmref9gmd96lpawgdwhx6vpdv6vqc688j72rgutk3qar/profile) | Judges each customer sentence, scores the interview, picks the verdict | `agent1q08gppxzdjsvrczrmref9gmd96lpawgdwhx6vpdv6vqc688j72rgutk3qar` |
+| [valiDate Strategist](https://agentverse.ai/agents/details/agent1qve9d7cjnn60y8v9ajt5gdz27z0zwvv880q4a04ge3jg4yx2p55hw7hpkqc/profile) | Writes the read-out and the next questions | `agent1qve9d7cjnn60y8v9ajt5gdz27z0zwvv880q4a04ge3jg4yx2p55hw7hpkqc` |
+| [valiDate Tester](https://agentverse.ai/agents/details/agent1qtx5rcatd6ecdsr63dapeq8vyn02jycvrh46kka4mf542xt36t2tza45m8y/profile) | Test client: plays a founder and scores the team against an answer key | `agent1qtx5rcatd6ecdsr63dapeq8vyn02jycvrh46kka4mf542xt36t2tza45m8y` |
 
 - **Orchestration:** valiDate calls Intake, then the Signal Analyst, then the Strategist, with typed agent-to-agent messages, and merges their answers. If a teammate does not answer in 45 s, it runs that step itself; it never invents a verdict.
 - **Each specialist also works on its own** in ASI:One, through the same Chat Protocol.
@@ -52,7 +53,14 @@ uv run --project agents python agents/run_team.py             # all four; Ctrl+C
 
 Details, tests and the tester agent: [`agents/README.md`](agents/README.md).
 
-External services used: [Agentverse](https://agentverse.ai) and [ASI:One](https://asi1.ai) (Fetch.ai), the [uAgents](https://github.com/fetchai/uAgents) framework, Jev by [TypeSafe AI](https://typesafe.ai) (the judgments), and the [OpenAI API](https://platform.openai.com) (the read-out text).
+What you need to run the agents, besides this repository:
+
+- An [Agentverse](https://agentverse.ai) account, to connect each agent's mailbox the first time it starts.
+- [ASI:One](https://asi1.ai), to talk to the agents.
+- A [TypeSafe AI](https://typesafe.ai) API key for Jev, the model that makes the judgments (`TYPESAFE_API_KEY`).
+- An [OpenAI API](https://platform.openai.com) key for the read-out text (`OPENAI_API_KEY`, `OPENAI_MODEL`).
+- The [uAgents](https://github.com/fetchai/uAgents) framework, installed by `uv sync`.
+- For the paid breakdown only: testnet FET in the paying wallet, free from the Fetch Dorado testnet faucet.
 
 ## Repository
 
