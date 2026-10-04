@@ -36,6 +36,7 @@ realsignal/
   agents/                   uAgents for ASI:One; they call the analyzer (hackathon) (uv)
     front/                  agent.py, chat_proto.py, flow.py (plans the steps and calls the team)
     intake/ analyst/ strategist/   thin specialists, one analyzer stage each
+    tester/                 test client: runs evals/cases through the real agents and scores them
     */README.md             each agent's Agentverse profile, published on mailbox connect
     specialists.py          each specialist's typed protocol and its chat handler
     chat.py                 Chat Protocol factory (from Fetch's openai-agent template), shared by all agents
@@ -102,6 +103,7 @@ uv run --project agents python agents/tests/smoke_chat.py direct        # or: sp
 cd agents && uv run pytest tests/test_flow.py                           # the front agent's conversation
 uv run --project agents python agents/front/agent.py
 uv run --project agents python agents/run_team.py                        # all four agents, one terminal
+uv run --project agents python agents/tester/agent.py                    # accuracy cases through the running agents
 ```
 
 ## How to change things

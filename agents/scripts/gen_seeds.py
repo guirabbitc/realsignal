@@ -10,7 +10,7 @@ from uagents_core.identity import Identity
 
 ROOT = Path(__file__).resolve().parents[2]
 ENV = ROOT / ".env"
-AGENTS = ["FRONT", "INTAKE", "ANALYST", "STRATEGIST"]
+AGENTS = ["FRONT", "INTAKE", "ANALYST", "STRATEGIST", "TESTER"]
 
 
 def main() -> None:
