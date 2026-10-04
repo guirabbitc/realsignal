@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 
 import { ApiError, apiPost, useApi, type IdeaDetail } from "@/components/api";
 import { Breadcrumb, LoadFailed, Notice, Skeleton, Steps } from "@/components/ui/feedback";
-import { EXAMPLES, type ExampleKey } from "@/lib/examples";
+import { EXAMPLE_IDEA, EXAMPLES, type ExampleKey } from "@/lib/examples";
 
 import { detectSpeakers, guessRoles, MAX_TRANSCRIPT_CHARS, needsMapping, relabel, type Role, type Speaker } from "./checks";
 
@@ -185,7 +185,7 @@ function Form({ idea }: { idea: IdeaDetail }) {
               }}
               aria-describedby="transcript-help"
               aria-invalid={unlabelled || tooLong}
-              placeholder={"Founder: Walk me through the last time this happened.\nCustomer: Friday. Two parties got the same table…"}
+              placeholder={"Founder: Walk me through the last time this happened.\nCustomer: Last month. I spent a whole Sunday on our investor update…"}
               className={`box-border min-h-[260px] w-full resize-y rounded-[14px] border-[2.5px] bg-white px-4 py-3.5 font-mono text-[15px] leading-relaxed text-ink placeholder:text-muted ${
                 unlabelled || tooLong ? "border-danger" : "border-ink"
               }`}
@@ -259,7 +259,7 @@ function Form({ idea }: { idea: IdeaDetail }) {
             value={who}
             maxLength={200}
             onChange={(e) => setWho(e.target.value)}
-            placeholder="Pat, ops lead at a 12-table restaurant"
+            placeholder="Sam, CEO of a 10-person B2B SaaS"
             className={field}
           />
         </div>
@@ -295,7 +295,10 @@ function Form({ idea }: { idea: IdeaDetail }) {
 
       <aside className="card flex min-w-0 flex-[2_1_280px] flex-col gap-3.5 p-6">
         <h2 className="m-0 font-serif text-[26px] font-medium">Try an example</h2>
-        <p className="m-0 text-[15px] leading-normal text-ink-soft">One click. We fill everything in and run it. These interviews are made up.</p>
+        <p className="m-0 text-[15px] leading-normal text-ink-soft">
+          One click. We fill everything in and run it. Made-up interviews with startup founders, all testing one idea: “
+          {EXAMPLE_IDEA}”
+        </p>
         {EXAMPLES.map((example) => (
           <button
             key={example.key}
@@ -313,7 +316,7 @@ function Form({ idea }: { idea: IdeaDetail }) {
           <span className="font-mono text-sm leading-relaxed">
             <strong>Founder:</strong> How do you do this today?
             <br />
-            <strong>Customer:</strong> I pay someone to do it by hand.
+            <strong>Customer:</strong> I export it from Stripe and fix it in a spreadsheet.
           </span>
         </div>
       </aside>
