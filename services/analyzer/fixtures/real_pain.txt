@@ -1,0 +1,13 @@
+Interviewer: Thanks for making time. We're building an app that plans a week of dinners and orders the groceries for you. How do you handle dinner planning today?
+Priya: Every Sunday I spent two hours building a spreadsheet of meals and a shopping list.
+Priya: Last month I paid 60 dollars for a meal kit subscription just to stop doing that, and I cancelled it because the portions were wrong for four people.
+Interviewer: What happens when the plan breaks?
+Priya: Last week we ordered takeout three times, and that cost us over 100 dollars.
+Priya: I already tried two planning apps and I still use the spreadsheet because neither one ordered the groceries.
+Interviewer: What would you want from a tool like ours?
+Priya: It has to order from the store I already use.
+Interviewer: We have an early version. Would you be open to trying it?
+Priya: Yes. I will pay for the first month right now if you can set it up this week.
+Priya: Can you sign me up today? I can introduce you to two other parents at school who have the same problem.
+Interviewer: That would be great.
+Priya: I'll send you their emails tonight, and I booked Thursday at 6 for the setup call.

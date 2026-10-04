@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://realsignal.dev/contracts/analyze.schema.json",
+  "title": "AnalyzeContract",
+  "description": "The analyzer's request and response. The single source of truth: TypeScript types and Pydantic models are generated from this file.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["request", "response"],
+  "properties": {
+    "request": { "$ref": "#/$defs/AnalyzeRequest" },
+    "response": { "$ref": "#/$defs/AnalyzeResponse" }
+  },
+  "$defs": {
+    "Label": {
+      "title": "Label",
+      "description": "How one interviewee sentence reads as evidence of demand.",
+      "type": "string",
+      "enum": ["real_signal", "polite", "neutral"]
+    },
+    "Verdict": {
+      "title": "Verdict",
+      "description": "What the founder should do after this interview.",
+      "type": "string",
+      "enum": ["keep_going", "narrow_down", "try_new_angle", "pivot"]
+    },
+    "Sentence": {
+      "title": "Sentence",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["order", "speaker", "text", "is_interviewee", "label", "confidence"],
+      "properties": {
+        "order": { "type": "integer", "minimum": 0, "description": "Position in the transcript, starting at 0." },
+        "speaker": { "type": "string" },
+        "text": { "type": "string" },
+        "is_interviewee": { "type": "boolean" },
+        "label": {
+          "description": "Null for interviewer sentences, which are not judged.",
+          "anyOf": [{ "$ref": "#/$defs/Label" }, { "type": "null" }]
+        },
+        "confidence": {
+          "description": "Confidence in the label, 0 to 1. Null when label is null.",
+          "anyOf": [{ "type": "number", "minimum": 0, "maximum": 1 }, { "type": "null" }]
+        }
+      }
+    },
+    "AnalyzeRequest": {
+      "title": "AnalyzeRequest",
+      "description": "JSON body of POST /analyze. For audio, send multipart/form-data instead with the fields `idea` and `file`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["idea", "transcript"],
+      "properties": {
+        "idea": { "type": "string", "minLength": 1, "description": "The idea this interview tests." },
+        "transcript": { "type": "string", "minLength": 1, "description": "Interview text, one `Speaker: words` turn per line." }
+      }
+    },
+    "AnalyzeResponse": {
+      "title": "AnalyzeResponse",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["transcript", "sentences", "score", "verdict", "summary", "next_steps"],
+      "properties": {
+        "transcript": { "type": "string", "description": "The transcript that was analyzed (produced by transcription when audio was sent)." },
+        "sentences": { "type": "array", "items": { "$ref": "#/$defs/Sentence" } },
+        "score": { "type": "number", "minimum": 0, "maximum": 100, "description": "Demand score, computed in Python." },
+        "verdict": { "$ref": "#/$defs/Verdict" },
+        "summary": { "type": "string" },
+        "next_steps": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

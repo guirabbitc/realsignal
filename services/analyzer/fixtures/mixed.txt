@@ -1,0 +1,14 @@
+Interviewer: Thanks for making time. We're building an app that plans a week of dinners and orders the groceries for you. How do you handle dinner planning today?
+Sam: I usually decide on Sunday what we're eating, roughly.
+Sam: Last week I threw away about a third of the vegetables I bought because the plan fell apart by Wednesday.
+Interviewer: Have you tried anything to fix that?
+Sam: I tried a meal planning app last year but I stopped using it after two weeks.
+Interviewer: What do you think of our idea?
+Sam: That sounds like a cool idea. I like it.
+Interviewer: Would you use it?
+Sam: I would probably try it if it was easy.
+Sam: I think my sister would love it too.
+Interviewer: Would you pay for it?
+Sam: Maybe. I would have to see it first.
+Interviewer: Can I send you a prototype next week?
+Sam: Sure, sounds nice.

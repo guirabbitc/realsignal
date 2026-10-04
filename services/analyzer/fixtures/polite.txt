@@ -1,0 +1,14 @@
+Interviewer: Thanks for making time. We're building an app that plans a week of dinners and orders the groceries for you. How do you handle dinner planning today?
+Dana: Oh, I just kind of figure it out each day.
+Interviewer: Does that ever cause problems?
+Dana: Not really. It's fine most of the time.
+Interviewer: What do you think of the idea?
+Dana: I love it! That sounds like a really cool idea.
+Dana: I think it's great that someone is working on this.
+Interviewer: Would you use something like that?
+Dana: Yeah, I would probably use it. I could see myself trying it.
+Dana: I'd definitely tell my friends about it.
+Interviewer: Would you pay for it?
+Dana: Sure, I would probably pay something for it. It sounds awesome.
+Interviewer: Anything you'd change?
+Dana: No, it sounds perfect. Good luck with it!

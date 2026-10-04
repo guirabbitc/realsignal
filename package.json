@@ -1,0 +1,9 @@
+{
+  "name": "realsignal",
+  "private": true,
+  "packageManager": "pnpm@12.9.1",
+  "scripts": {
+    "contracts:generate": "pnpm --filter @realsignal/contracts generate",
+    "contracts:check": "pnpm --filter @realsignal/contracts check"
+  }
+}
