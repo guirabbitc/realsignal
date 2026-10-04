@@ -47,11 +47,23 @@ def _fake_clients() -> Clients:
     return Clients(transcriber=FakeTranscriber(), judge=FakeJudge(), writer=FakeWriter())
 
 
+class _NoTranscriber:
+    """Stands in when there is no ElevenLabs key: transcripts still work, audio is refused."""
+
+    def transcribe(self, audio: bytes, filename: str, content_type: str) -> str:
+        raise HTTPException(status_code=503, detail="ELEVENLABS_API_KEY is not set, so audio cannot be transcribed")
+
+
+def _transcriber():
+    key = os.getenv("ELEVENLABS_API_KEY")
+    return ElevenLabsTranscriber(key) if key else _NoTranscriber()
+
+
 def get_clients() -> Clients:
     if fake_mode():
         return _fake_clients()
     return Clients(
-        transcriber=ElevenLabsTranscriber(_required("ELEVENLABS_API_KEY")),
+        transcriber=_transcriber(),
         judge=JevJudge(
             _required("JEV_API_KEY"),
             base_url=os.getenv("JEV_BASE_URL", JEV_BASE_URL),

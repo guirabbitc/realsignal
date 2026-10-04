@@ -34,7 +34,7 @@ Dropped from the hackathon plan for now: the Market Check agent, cross-interview
 | Part | Status | Verified by |
 | --- | --- | --- |
 | Contract + drift check | Done | `pnpm contracts:check` passes; fails when a generated file is edited by hand |
-| Analyzer | Done, on fakes | `pytest`: 17 tests, offline |
+| Analyzer | Done, live for transcripts | `pytest`: 17 tests, offline. Live run on 2026-10-04 with real Jev and OpenAI: polite 0 (pivot) < mixed 25.3 (narrow down) < real pain 100 (keep going). One run each, so consistency across runs is not yet checked. |
 | Database | Done | `docker compose up`, `pnpm db:migrate` on an empty database: 5 tables |
 | Web app | Done | Build and typecheck pass. Fixture upload goes `processing` → `done` and the result page shows sentences, score and verdict. With the analyzer stopped, the row goes `failed` with the error. |
 | Front agent | Done, works in ASI:One (fake mode) | Smoke test in `direct` mode; manual test in ASI:One on 2026-10-04 |
@@ -42,7 +42,7 @@ Dropped from the hackathon plan for now: the Market Check agent, cross-interview
 
 **Not verified yet:**
 
-- **Live AI calls.** The ElevenLabs, Jev and OpenAI clients were written from their docs and tested against mocked HTTP only. No API keys were available. Everything seen so far ran in fake mode, where labels come from keyword rules.
+- **Live transcription.** There is no ElevenLabs key yet, so audio has never been transcribed. Without the key the analyzer still handles transcripts and refuses audio with a clear error.
 - **ASI:One, partly.** Verified by Murilo on 2026-10-04 with the front agent in direct mode and the analyzer in fake mode: the mailbox is connected, the guided conversation works, and a transcript returns a verdict (real-pain fixture: keep going; polite fixture: pivot). Audio upload is untested.
 - **Agents over the network.** The specialists were chained inside one process. Four separate processes talking through Agentverse are untested.
 - **Railway.** No deployment config exists.
@@ -60,7 +60,7 @@ Dropped from the hackathon plan for now: the Market Check agent, cross-interview
 
 ## Next
 
-1. Put `ELEVENLABS_API_KEY`, `JEV_API_KEY` and `OPENAI_API_KEY` in `.env`, set `ANALYZER_FAKE_CLIENTS=` (empty), and run one real interview through the web app. Expect to adjust the Jev instructions and the writer prompt.
+1. Add `ELEVENLABS_API_KEY` and test one recording. Run each fixture three times to check the verdicts are stable. Consider tuning: one-word answers like "Yes." are judged on their own and get low-confidence labels.
 2. ASI:One: the front agent works there in fake mode. Repeat the check once the analyzer is live.
 3. Connect the three specialists, set `FRONT_USE_SPECIALISTS=1`, repeat.
 4. Decide audio storage and add auth.
@@ -69,6 +69,7 @@ Dropped from the hackathon plan for now: the Market Check agent, cross-interview
 
 ## Changelog
 
+- **2026-10-04** First live run with real Jev and OpenAI keys; the Jev request and response shapes matched the client as written. The analyzer no longer needs an ElevenLabs key for transcript-only requests.
 - **2026-10-03** Front agent conversation rewritten after the first ASI:One test: it now introduces itself, asks for the idea, then asks for the interview, and no longer needs the `idea:` prefix. Added `agents/tests/test_flow.py` (11 tests, offline).
 - **2026-10-03** Product renamed from Real Signal to ValiDate in everything a user sees: web app, agent names and protocols, analyzer title, docs. Internal identifiers keep the old name: the repo and folder (`realsignal`), package names (`@realsignal/*`), the local database name, and the agent seeds (so addresses did not change).
 - **2026-10-03** Migrated to the finalized stack. Added the contract with generated TS and Pydantic types and a drift check; the FastAPI analyzer with pipeline, fakes, fixtures and tests; the Next.js app with Drizzle schema and migrations; local Postgres; the front agent calling the analyzer; three specialist agents over stage endpoints; `CLAUDE.md`. Moved agent scripts and tests under `agents/`, switched Python to `uv`, removed `brain/`.
