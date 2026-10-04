@@ -6,8 +6,8 @@ Working plan and status for the `worktree-audio-input` branch. A fresh session r
 
 | Phase | State | Notes |
 | --- | --- | --- |
-| 0. Recon and plan | **done, waiting for answers** | Questions at the bottom |
-| 1. Analyzer `POST /transcribe` | next | |
+| 0. Recon and plan | **done** | Answers under "Decided" |
+| 1. Analyzer `POST /transcribe` | **in progress** | Unit tests use small hand-built word lists until the recorded Scribe response exists |
 | 2. Contract and web API | — | |
 | 3. UI | — | |
 | 4. Real round trip | — | Needs `ELEVENLABS_API_KEY` |
@@ -260,11 +260,17 @@ Not written yet. It goes into the repo only after approval.
 
 ## Open questions
 
-Asked in Phase 0 through the question tool:
-1. Audio fixtures: (a) the team records `real_pain` and `polite`, or (b) a TTS script.
-2. `AUDIO_MAX_MB` / `AUDIO_MAX_MINUTES`.
-3. Approvals: contract draft, `python-multipart`, `@playwright/test`, editing protected `docs/SPEC.md`.
-4. Consent wording kept as a draft.
+### Decided (team, 2026-10-04)
+
+1. Audio fixtures: **(a)** the team records `real_pain` and `polite` (real voices, real mic): a `.wav` (fake mic) and an `.m4a` of each, in `services/analyzer/tests/recordings/audio/`.
+2. `AUDIO_MAX_MB = 100`, `AUDIO_MAX_MINUTES = 60`.
+3. Approved: the contract draft above, `python-multipart`, `@playwright/test`, and appending an "Audio input" section to `docs/SPEC.md` in Phase 5.
+4. Consent wording: the brief's draft, shown in audio modes only; flagged in the PR for human review.
+
+### Waiting on the team
+
+- `ELEVENLABS_API_KEY` in this worktree's `services/analyzer/.env` (needed to record the Scribe response and for Phase 4).
+- The four audio files from decision 1.
 
 Still open, with a proposed answer (build against it unless told otherwise):
 - **Q-A (D9)** One voice found: the existing form blocks a transcript with no `Customer:`. Proposed: for an audio-built transcript, show the honest one-voice note and **allow** submit. The gate returns `need_more_evidence` (SPEC §5: a founder-only transcript always does). Text paste keeps today's block.
