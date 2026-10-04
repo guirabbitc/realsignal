@@ -2,7 +2,7 @@ import pytest
 
 from app.errors import JevFailed, WriterUnverifiable
 from app.models import AnalyzeRequest
-from app.pipeline.analyze import run_analysis
+from app.pipeline.analyze import Judged, judge_interview, run_analysis, write_readout
 from app.pipeline.writer import WriterOutput
 from tests.conftest import LabelledJev, ScriptedWriter, labelled_jev_for, load_fixture
 
@@ -94,3 +94,14 @@ async def test_writer_cannot_change_the_verdict(make_judge, rubric):
         verdict_probs={"keep_going": 0.1, "narrow_down": 0.1, "new_angle": 0.1, "pivot": 0.7},
     )
     assert result.verdict == "pivot"  # whatever the writer says, the verdict is Jev's
+
+
+async def test_the_two_halves_give_the_same_result_as_one_run_even_across_a_json_hop(make_judge, rubric):
+    transcript, _ = load_fixture("real_pain")
+    whole = await analyze_fixture("real_pain", make_judge, rubric)
+
+    judged = await judge_interview(request(transcript), make_judge(labelled_jev_for("real_pain")), rubric)
+    carried = Judged.model_validate_json(judged.model_dump_json())  # as sent between two agents
+    halves = await write_readout(request(transcript), carried, ScriptedWriter(), rubric)
+
+    assert halves == whole
