@@ -73,6 +73,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <nav aria-label="Main" className="flex flex-col gap-1">
             <NavItem href="/" label="Home" active={pathname === "/"} />
             <NavItem href="/ideas" label="My ideas" count={ideas ? String(ideas.length) : ""} active={pathname === "/ideas"} />
+            <NavItem href="/chat" label="Chat with the agents" active={pathname === "/chat"} />
           </nav>
           <nav aria-label="Ideas" className="flex flex-col gap-1.5">
             <span className="px-3 text-[13px] font-bold text-muted">Ideas</span>
@@ -110,6 +111,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-3.5">
             <Link href="/ideas" className="text-[15px] font-bold text-ink">
               My ideas
+            </Link>
+            <Link href="/chat" className="text-[15px] font-bold text-ink">
+              Chat
             </Link>
             <Link href="/" className="btn btn-primary">
               New idea
