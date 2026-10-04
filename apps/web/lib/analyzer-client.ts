@@ -1,11 +1,16 @@
 // The ONLY code that calls the analyzer (SPEC §4 rule 2). Every call sends X-Analyzer-Key.
-import type { AnalyzeRequest, AnalyzeResult } from "./contracts";
+import type { AnalyzeRequest, AnalyzeResult, TranscribeResult } from "./contracts";
 
 const ANALYZE_TIMEOUT_MS = 120_000;
+// The analyzer spends at most 270 s on ElevenLabs; this stays under Node fetch's 300 s header timeout.
+const TRANSCRIBE_TIMEOUT_MS = 285_000;
 const HEALTH_TIMEOUT_MS = 2_000;
 
 export class AnalyzerCallError extends Error {
-  constructor(public readonly code: string) {
+  constructor(
+    public readonly code: string,
+    public readonly reason: string | null = null,
+  ) {
     super(`analyzer call failed: ${code}`);
   }
 }
@@ -31,6 +36,27 @@ export async function analyze(request: AnalyzeRequest): Promise<AnalyzeResult> {
   const body = await response.json().catch(() => null);
   if (!response.ok) throw new AnalyzerCallError(body?.error?.code ?? `http_${response.status}`);
   return body as AnalyzeResult;
+}
+
+/** Audio in, voices and turns out (packages/contracts/transcribe.schema.json). Nothing is stored. */
+export async function transcribe(audio: Blob, extension: string, numSpeakers: number): Promise<TranscribeResult> {
+  const form = new FormData();
+  form.set("file", audio, `audio${extension}`);
+  form.set("num_speakers", String(numSpeakers));
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl()}/transcribe`, {
+      method: "POST",
+      headers: { "x-analyzer-key": process.env.ANALYZER_KEY ?? "" },
+      body: form,
+      signal: AbortSignal.timeout(TRANSCRIBE_TIMEOUT_MS),
+    });
+  } catch (error) {
+    throw new AnalyzerCallError(error instanceof Error && error.name === "TimeoutError" ? "timeout" : "analyzer_unreachable");
+  }
+  const body = await response.json().catch(() => null);
+  if (!response.ok) throw new AnalyzerCallError(body?.error?.code ?? `http_${response.status}`, body?.error?.reason ?? null);
+  return body as TranscribeResult;
 }
 
 export async function analyzerHealthy(): Promise<boolean> {

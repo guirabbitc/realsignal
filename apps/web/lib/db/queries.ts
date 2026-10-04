@@ -66,10 +66,25 @@ export async function getIdeaWithInterviews(founderId: string, ideaId: string) {
   return { idea, interviews: history };
 }
 
+export async function founderOwnsIdea(founderId: string, ideaId: string): Promise<boolean> {
+  const rows = await getDb()
+    .select({ id: ideas.id })
+    .from(ideas)
+    .where(and(eq(ideas.id, ideaId), eq(ideas.founderId, founderId)))
+    .limit(1);
+  return rows.length > 0;
+}
+
 /** Returns null when the idea does not belong to this founder. */
 export async function createInterview(
   founderId: string,
-  input: { ideaId: string; transcript: string; kind: "interview" | "demo"; intervieweeLabel: string | null },
+  input: {
+    ideaId: string;
+    transcript: string;
+    kind: "interview" | "demo";
+    intervieweeLabel: string | null;
+    source?: "text" | "audio";
+  },
 ) {
   const db = getDb();
   const [idea] = await db
@@ -79,7 +94,13 @@ export async function createInterview(
   if (!idea) return null;
   const [row] = await db
     .insert(interviews)
-    .values({ ideaId: idea.id, transcript: input.transcript, kind: input.kind, intervieweeLabel: input.intervieweeLabel })
+    .values({
+      ideaId: idea.id,
+      transcript: input.transcript,
+      kind: input.kind,
+      intervieweeLabel: input.intervieweeLabel,
+      source: input.source ?? "text",
+    })
     .returning({ id: interviews.id, status: interviews.status });
   return { ...row, idea };
 }
