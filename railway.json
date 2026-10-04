@@ -1,0 +1,16 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "_comment": "Config for the WEB service, which builds from the repo root (SPEC §0.4). The analyzer has its own in services/analyzer.",
+  "build": {
+    "builder": "RAILPACK",
+    "buildCommand": "pnpm --filter web build",
+    "watchPatterns": ["apps/web/**", "packages/**", "pnpm-lock.yaml"]
+  },
+  "deploy": {
+    "preDeployCommand": ["pnpm --filter web db:migrate:deploy"],
+    "startCommand": "pnpm --filter web start",
+    "healthcheckPath": "/api/health",
+    "healthcheckTimeout": 120,
+    "restartPolicyType": "ON_FAILURE"
+  }
+}

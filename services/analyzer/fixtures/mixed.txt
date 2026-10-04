@@ -1,0 +1,12 @@
+Founder: How do people book a table with you today?
+Customer: Mostly phone calls, some WhatsApp. We have about twelve tables and two seatings a night.
+Founder: When did booking last go wrong?
+Customer: Two weeks ago we double-booked a table on a Saturday because a WhatsApp message and a phone call came in at the same time. We had to give that couple free desserts and they still left a bad review.
+Founder: How often does that happen?
+Customer: Maybe once a month, honestly, it's not every week. Most nights the phone works fine for us.
+Founder: What have you done about it so far?
+Customer: Nothing really, my sister keeps a paper book at the front and we check it when we remember. On Sundays I spend about an hour calling people back to confirm their tables.
+Founder: If a WhatsApp bot took the bookings, how would that fit?
+Customer: I think that sounds interesting, I'd probably try it. It would be nice for the younger customers who never call. But I'm not sure my older regulars would use it, they like to talk to someone on the phone.
+Founder: What would make it worth paying for?
+Customer: If it stopped the double bookings, maybe. I'd have to see it working first. It's a nice idea though, I can see why you're excited about it.

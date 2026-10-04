@@ -1,0 +1,10 @@
+Founder: Thanks for making time. How do you handle reservations today?
+Customer: Honestly it's a mess. Most of our bookings come in through WhatsApp, and I answer them myself between services. Last Friday I missed three messages and two tables of six walked in to a full room.
+Founder: What did that cost you?
+Customer: Those two tables were about 900 dollars of revenue we lost in one night. It happens almost every weekend. I pay someone 300 dollars a month just to sit with my phone and reply to booking messages on Friday and Saturday.
+Founder: Have you tried anything else to fix it?
+Customer: We tried OpenTable last year. We cancelled after four months because our regulars refused to download an app, they just keep texting us on WhatsApp. I also tried a Google Form, and nobody filled it in.
+Founder: What would have to be true for you to switch to something new?
+Customer: It has to work inside WhatsApp, because that's where my customers already are. If it can confirm a table and put it in my booking sheet, I would pay what I pay my assistant today.
+Founder: Would you be open to trying an early version?
+Customer: Yes. Send me the pilot link and I'll set it up on Monday for the lunch service. You can also talk to my manager Paulo, he handles the floor plan, I'll introduce you by email today.

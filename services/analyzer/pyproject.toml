@@ -1,0 +1,38 @@
+[project]
+name = "validate-analyzer"
+version = "0.1.0"
+description = "validate.ai analyzer: stateless judgment pipeline (Jev judges, OpenAI writes, Python counts)."
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.142.2",
+    "httpx>=0.28.1",
+    "openai>=3.24.0",
+    "pydantic>=2",
+    "pysbd>=0.3.4",
+    "typesafe-sdk>=0.7.2",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+filterwarnings = ["ignore::SyntaxWarning"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[dependency-groups]
+dev = [
+    "jsonschema>=4.26.0",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.16.10",
+]

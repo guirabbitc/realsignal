@@ -1,0 +1,12 @@
+{
+  "_owner": "human. Protected: the factory may not edit this file (FACTORY_RULES.md §5).",
+  "idea": "WhatsApp bot that takes restaurant reservations",
+  "kind": "interview",
+  "score_band": { "min_exclusive": 70, "max_inclusive": 100 },
+  "allowed_verdicts": ["keep_going"],
+  "expected_categories": {
+    "3": "past_pain", "4": "past_pain", "5": "past_pain", "7": "past_pain", "8": "past_pain",
+    "9": "past_pain", "11": "past_pain", "12": "past_pain", "13": "past_pain", "15": "neutral",
+    "16": "hypothetical", "18": "commitment", "19": "commitment", "20": "commitment"
+  }
+}

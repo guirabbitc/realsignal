@@ -1,0 +1,29 @@
+{
+  "version": "1",
+  "models": { "jev": "jev-1.13.0" },
+  "concurrency": 8,
+  "verdict_samples": 3,
+  "categories": {
+    "commitment":   { "group": "real",   "weight": 3, "description": "A concrete next step the customer commits to: a pilot, a meeting, money, an introduction, a date." },
+    "past_pain":    { "group": "real",   "weight": 2, "description": "Something the customer already did, paid, lost or worked around in the past because of this problem." },
+    "hypothetical": { "group": "polite", "weight": 1, "description": "What the customer says they would, might or could do in the future, with nothing behind it." },
+    "compliment":   { "group": "polite", "weight": 1, "description": "Praise or enthusiasm about the idea or the founder, with no evidence of need." },
+    "neutral":      { "group": "none",   "weight": 0, "description": "A fact, context or small talk that says nothing about interest either way." }
+  },
+  "questions": {
+    "category": "What kind of statement is this from a potential customer?",
+    "is_real_signal": "Does this statement show real pain or real buying intent, rather than politeness?",
+    "pitched_early": "Did the founder describe the product before asking about the problem?",
+    "leading_questions": "Did the founder ask questions that suggest the answer they want?",
+    "verdict": "Given this evidence, what should the founder do next?"
+  },
+  "verdicts": {
+    "keep_going":  "The evidence shows real pain or commitment for this idea and this customer. Keep going.",
+    "narrow_down": "There is some real signal, but only for part of the idea or a narrower customer. Narrow down.",
+    "new_angle":   "The pain looks real but this solution or framing is not landing. Try a new angle.",
+    "pivot":       "The interest is mostly politeness with no real pain or commitment. Pivot."
+  },
+  "gate": { "min_non_neutral": 4, "min_customer_words": 150, "min_verdict_confidence": 0.6 },
+  "founder_flags": { "talk_ratio": 0.5, "pitched_early": 0.5, "leading_questions": 0.5 },
+  "limits": { "max_transcript_chars": 80000 }
+}
