@@ -7,6 +7,9 @@
 *.pem
 *.key
 agents/**/*.seed
+# uAgents local storage (ctx.storage holds founders' ideas) and keys, written where the agent runs
+agent1q*_data.json
+private_keys.json
 service-account*.json
 .archon/config.yaml
 
