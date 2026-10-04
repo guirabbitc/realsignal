@@ -5,7 +5,9 @@ from typing import Protocol
 from app.contracts import Label, Sentence, Verdict
 from app.pipeline.scoring import count_labels
 
-OPENAI_MODEL = "gpt-5.4-mini"
+# Cheapest per analysis when measured on a fixture (2026-10-04): no reasoning tokens, ~$0.00014 a call.
+# Override with the OPENAI_MODEL env var.
+OPENAI_MODEL = "gpt-4.1-nano"
 
 SYSTEM_PROMPT = (
     "You help first-time founders read customer interviews. The judgments are already "

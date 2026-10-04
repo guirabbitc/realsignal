@@ -69,7 +69,7 @@ def get_clients() -> Clients:
             base_url=os.getenv("JEV_BASE_URL", JEV_BASE_URL),
             model=os.getenv("JEV_MODEL", JEV_MODEL),
         ),
-        writer=OpenAIWriter(_required("OPENAI_API_KEY"), model=os.getenv("OPENAI_MODEL", OPENAI_MODEL)),
+        writer=OpenAIWriter(_required("OPENAI_API_KEY"), model=os.getenv("OPENAI_MODEL") or OPENAI_MODEL),
     )
 
 
