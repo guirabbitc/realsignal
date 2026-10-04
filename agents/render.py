@@ -71,8 +71,9 @@ def render_analysis(result: AnalyzeResult) -> str:
     return "\n".join(lines)
 
 
-def render_judged(judged: Judged) -> str:
-    """The Signal Analyst's reply: verdict, score and every customer sentence with its judgment."""
+def render_judged(judged: Judged | AnalyzeResult) -> str:
+    """Verdict, score and every customer sentence with its judgment: the Signal Analyst's reply, and
+    the front agent's breakdown."""
     lines = verdict_lines(judged) + ["", "**Each customer sentence**"]
     lines += [
         f'- {CATEGORY_TEXT[s.category]} ({_percent(s.p_real)} real): "{s.quote}"'

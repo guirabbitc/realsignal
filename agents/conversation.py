@@ -9,6 +9,7 @@ import re
 from collections.abc import Awaitable, Callable
 
 from chat import Upload
+from labels import restore_turns
 from uagents import Context
 
 SPEAKER_LINE = re.compile(r"^\s*[^:\n]{1,40}:\s+\S", re.MULTILINE)
@@ -33,8 +34,12 @@ MAX_IDEA_CHARS = 500  # the analyzer's limit
 Finish = Callable[[Context, str, str], Awaitable[str]]
 
 
+def idea_key(sender: str) -> str:
+    return f"idea:{sender}"
+
+
 def looks_like_transcript(text: str) -> bool:
-    return len(SPEAKER_LINE.findall(text)) >= 2 or len(text) > MAX_IDEA_CHARS
+    return len(SPEAKER_LINE.findall(restore_turns(text))) >= 2 or len(text) > MAX_IDEA_CHARS
 
 
 def clean(text: str) -> str:
@@ -58,7 +63,7 @@ async def converse(
     ctx: Context, sender: str, texts: list[str], uploads: list[Upload], *, intro: str, finish: Finish
 ) -> str:
     """Collect the idea and the interview from the founder, then call `finish(ctx, idea, transcript)`."""
-    idea_key, pending_key = f"idea:{sender}", f"pending:{sender}"
+    pending_key = f"pending:{sender}"
     transcript: str | None = None
     new_idea: str | None = None
     small_talk = False
@@ -76,7 +81,7 @@ async def converse(
             transcript = text
         elif is_small_talk(text):
             small_talk = True
-        elif not ctx.storage.get(idea_key):
+        elif not ctx.storage.get(idea_key(sender)):
             new_idea = candidate
         else:
             small_talk = True
@@ -88,8 +93,8 @@ async def converse(
             refused_file = True
 
     if new_idea:
-        ctx.storage.set(idea_key, new_idea[:MAX_IDEA_CHARS])
-    idea = ctx.storage.get(idea_key)
+        ctx.storage.set(idea_key(sender), new_idea[:MAX_IDEA_CHARS])
+    idea = ctx.storage.get(idea_key(sender))
     if not transcript and new_idea:
         transcript = ctx.storage.get(pending_key)
 

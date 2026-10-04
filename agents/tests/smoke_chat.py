@@ -7,7 +7,9 @@ agent's REST /chat endpoint (as the web app does).
     uv run --project agents python agents/tests/smoke_chat.py           # run the checks and exit
     uv run --project agents python agents/tests/smoke_chat.py --serve   # keep the team up on port 8099,
                                                                         # for trying the web chat locally
-    (add --live to either to use the real Jev and OpenAI from agents/.env: paid, small)
+    uv run --project agents python agents/tests/smoke_chat.py --tester  # the tester agent scores one
+                                                                        # reference fixture through the team
+    (add --live to any of them to use the real Jev and OpenAI from agents/.env: paid, small)
 """
 import asyncio
 import json
@@ -51,7 +53,7 @@ from uagents_core.contrib.protocols.chat import (
 
 from tests.doubles import IDEA, REAL_PAIN, fake_services
 
-SERVE, LIVE = "--serve" in sys.argv, "--live" in sys.argv
+SERVE, LIVE, TESTER = "--serve" in sys.argv, "--live" in sys.argv, "--tester" in sys.argv
 if not LIVE:
     pipeline.services = lambda: fake_services("real_pain")
 
@@ -128,8 +130,28 @@ async def on_ack(ctx: Context, sender: str, msg: ChatAcknowledgement):
 
 client.include(client_proto)
 
+def tester_agent() -> Agent:
+    """The tester (agents/tester/agent.py) scoring the real_pain reference fixture through the team."""
+    from tester.agent import attach_tester
+    from tester.scoring import load_cases, report
+    from tests.test_tester_scoring import fixture_case
+
+    cases_file = Path(os.environ.get("TMPDIR", "/tmp")) / "validate-smoke-case.json"
+    cases_file.write_text(json.dumps([fixture_case("real_pain")]))
+
+    def finish(results) -> None:
+        print(report(results), flush=True)
+        passed = all(r.ran and r.through_team and r.verdict_allowed and r.categories_total for r in results)
+        print("PASS (tester)" if passed else "FAIL (tester)", flush=True)
+        os._exit(0 if passed else 1)
+
+    tester = Agent(name="tester-smoke", seed="validate-smoke-tester")
+    attach_tester(tester, load_cases(cases_file), front.address, team[2].address, finish)
+    return tester
+
+
 if __name__ == "__main__":
     bureau = Bureau(port=PORT)
-    for member in team if SERVE else (*team, client):
+    for member in team if SERVE else (*team, tester_agent() if TESTER else client):
         bureau.add(member)
     bureau.run()

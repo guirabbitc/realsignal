@@ -29,6 +29,27 @@ The same chat is also a small window on every other page (`components/chat/ChatW
 
 That endpoint is served on the front agent's own port, not through the Agentverse mailbox. The web app must be able to reach it: set `AGENT_URL` in `apps/web/.env` (`http://localhost:8001` locally). A web app deployed on Railway cannot reach an agent on a laptop without a tunnel.
 
+## Cards and payment (front agent, in ASI:One)
+
+- **Interactive cards.** The verdict comes with an ASI:One card (`cards.py`): the verdict, the score, the strongest quote, and three buttons: every sentence judged, another interview, a new idea. The text reply stays complete, so the web chat and any client that cannot show cards lose nothing.
+- **Payment Protocol.** The verdict and read-out are free. The sentence-by-sentence breakdown is the paid extra (`payments.py`): a review card shows the price, then the agent sends a `RequestPayment` for a direct FET transfer on the Fetch testnet. On `CommitPayment` it reads the transaction from the ledger and only then sends `CompletePayment` and the breakdown; otherwise `CancelPayment` with the reason. One transaction unlocks one breakdown, once.
+- **Switch.** Set `PAYMENT_FET_AMOUNT` (for example `0.1`) in `agents/.env` to turn payments on. Unset, the breakdown is free. The web chat cannot pay, so with payments on it points to ASI:One.
+
+## Deploy (Railway)
+
+The team runs as the `agents` service in the `validate-ai` project, at `https://agents-production-6673.up.railway.app` (public domain on port 8001, the front agent; `/chat` refuses requests without `AGENT_CHAT_KEY`). It is public because uAgents binds `0.0.0.0` only and Railway's private network may be IPv6-only.
+
+- **Deploy by upload, not from GitHub.** A service built from the repo root would pick up the web service's root `railway.json`, and Railway no longer accepts a custom config path for a new service. Upload a folder holding only `agents/`, `services/analyzer/` and `agents/Dockerfile` at its root:
+  ```bash
+  rm -rf /tmp/agents-upload && mkdir -p /tmp/agents-upload
+  git archive HEAD agents services/analyzer | tar -x -C /tmp/agents-upload
+  cp /tmp/agents-upload/agents/Dockerfile /tmp/agents-upload/Dockerfile
+  railway up /tmp/agents-upload --path-as-root --service agents --environment production --ci
+  ```
+- **Variables on `agents`:** the four `AGENT_SEED_*` (the addresses come from them; never change them), `FRONT_USE_SPECIALISTS=1`, `AGENT_CHAT_KEY`, and `TYPESAFE_API_KEY`, `OPENAI_API_KEY`, `OPENAI_MODEL` as references to the analyzer service (`${{analyzer.…}}`).
+- **Variables on `web`:** `AGENT_URL` (the URL above) and `AGENT_CHAT_KEY=${{agents.AGENT_CHAT_KEY}}`.
+- **One process per seed.** While the Railway team runs, do not run the same seeds on a laptop: both would read the same mailboxes.
+
 ## Test
 
 ```bash
@@ -36,6 +57,16 @@ cd agents && uv run pytest                                    # offline; real pi
 uv run --project agents python agents/tests/smoke_chat.py     # four agents in one process: chat + REST
 uv run --project agents python agents/tests/smoke_chat.py --serve --live   # a local team on port 8099, real APIs
 ```
+
+## Measure accuracy with the tester agent
+
+`tester/agent.py` is a fifth agent (port 8005) that plays a founder. For every case it chats with the front agent, which runs the whole team, and asks the Signal Analyst for its judgment of each sentence; then it scores both against an answer key.
+
+1. Give `tester/generate_cases_prompt.md` to another LLM. It returns 30 synthetic interviews with an answer key, 10 per reply, as JSON.
+2. Save each reply as a file in `tester/cases/`.
+3. With the team running: `uv run --project agents python agents/tester/agent.py`. The first time, connect its mailbox from the inspector link and run it again.
+
+The report gives verdict accuracy (exact, and within the key's allowed set), category accuracy (exact, and by group: real / polite / none), founder-flag accuracy, and every disagreement. It also lists broken cases, where the key expects a verdict from an interview too thin to pass the analyzer's gate. `--local` runs the same scoring on the pipeline directly, without agents, which is much faster while tuning. Reports are saved in `tester/results/` (git-ignored).
 
 ## Files
 

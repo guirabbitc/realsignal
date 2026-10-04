@@ -1,5 +1,8 @@
 # validate.ai
 
+![tag:innovationlab](https://img.shields.io/badge/innovationlab-3D8BD3)
+![tag:hackathon](https://img.shields.io/badge/hackathon-5F43F1)
+
 **An AI coach for customer interviews.** Paste the transcript of a discovery interview or demo, and validate.ai tells you which things the customer said were **real signals of interest** and which were **just politeness**. Then it gives a verdict on what to do next, with the exact quotes to prove it.
 
 > Built at MHacks 2026 (Actually Intelligent + Fetch.ai tracks) by Guilherme Coelho and Murilo Guazzelli. Working name; the final name is open.
@@ -21,6 +24,44 @@ Customers are polite. "Cool idea" and "I'd use that" feel like validation, but t
 5. **Write** (OpenAI): a plain-English read-out with the reasons and the next 3 questions to ask. It cannot change the verdict.
 6. **Verify** (Python): any quote in the read-out that is not verbatim in the transcript is dropped.
 
+## The agents on Fetch.ai (ASI:One)
+
+The same analysis runs as a team of four agents (plus a tester), registered on Agentverse under Innovation Lab and reachable in ASI:One through the Agent Chat Protocol. The whole workflow happens in one ASI:One conversation: say hi to **valiDate**, give your idea in one sentence, paste the interview, and get the verdict, the score, the quotes and the next questions.
+
+| Agent | Job | Address |
+| --- | --- | --- |
+| [valiDate](https://agentverse.ai/agents/details/agent1q04gnfnfl0sl0qusvte6rd0gnzhvtvhzpjceugx9p07wuny8lswlvj0g4mn/profile) | Talks to the founder, plans the steps, merges the answers | `agent1q04gnfnfl0sl0qusvte6rd0gnzhvtvhzpjceugx9p07wuny8lswlvj0g4mn` |
+| [valiDate Intake](https://agentverse.ai/agents/details/agent1q0exnynml2849c0kmafyth4mem8xgs9fzx5yqmyzep8uc7za7lmyssrqeqq/profile) | Works out who is the interviewer and who is the customer | `agent1q0exnynml2849c0kmafyth4mem8xgs9fzx5yqmyzep8uc7za7lmyssrqeqq` |
+| [valiDate Signal Analyst](https://agentverse.ai/agents/details/agent1q08gppxzdjsvrczrmref9gmd96lpawgdwhx6vpdv6vqc688j72rgutk3qar/profile) | Judges each customer sentence, scores the interview, picks the verdict | `agent1q08gppxzdjsvrczrmref9gmd96lpawgdwhx6vpdv6vqc688j72rgutk3qar` |
+| [valiDate Strategist](https://agentverse.ai/agents/details/agent1qve9d7cjnn60y8v9ajt5gdz27z0zwvv880q4a04ge3jg4yx2p55hw7hpkqc/profile) | Writes the read-out and the next questions | `agent1qve9d7cjnn60y8v9ajt5gdz27z0zwvv880q4a04ge3jg4yx2p55hw7hpkqc` |
+| [valiDate Tester](https://agentverse.ai/agents/details/agent1qtx5rcatd6ecdsr63dapeq8vyn02jycvrh46kka4mf542xt36t2tza45m8y/profile) | Test client: plays a founder and scores the team against an answer key | `agent1qtx5rcatd6ecdsr63dapeq8vyn02jycvrh46kka4mf542xt36t2tza45m8y` |
+
+- **Orchestration:** valiDate calls Intake, then the Signal Analyst, then the Strategist, with typed agent-to-agent messages, and merges their answers. If a teammate does not answer in 45 s, it runs that step itself; it never invents a verdict.
+- **Each specialist also works on its own** in ASI:One, through the same Chat Protocol.
+- **Interactive cards:** in ASI:One the verdict comes with a card and buttons for the next step.
+- **Payment Protocol:** the verdict and read-out are free; the sentence-by-sentence breakdown is paid in FET (Fetch testnet). The agent checks the transfer on the ledger before it delivers.
+- **In the web app:** the "Ask the agents" window on every page, and the "Chat with the agents" page, are the same conversation with the same agents.
+- **Measured:** a fifth agent, the tester, plays a founder against the team and scores its answers against an answer key.
+
+Run them:
+
+```bash
+cp .env.example agents/.env                                   # keep the agents section; fill in the keys
+uv run --project agents python agents/scripts/gen_seeds.py    # fills the seeds, prints the addresses
+uv run --project agents python agents/run_team.py             # all four; Ctrl+C stops them
+```
+
+Details, tests and the tester agent: [`agents/README.md`](agents/README.md).
+
+What you need to run the agents, besides this repository:
+
+- An [Agentverse](https://agentverse.ai) account, to connect each agent's mailbox the first time it starts.
+- [ASI:One](https://asi1.ai), to talk to the agents.
+- A [TypeSafe AI](https://typesafe.ai) API key for Jev, the model that makes the judgments (`TYPESAFE_API_KEY`).
+- An [OpenAI API](https://platform.openai.com) key for the read-out text (`OPENAI_API_KEY`, `OPENAI_MODEL`).
+- The [uAgents](https://github.com/fetchai/uAgents) framework, installed by `uv sync`.
+- For the paid breakdown only: testnet FET in the paying wallet, free from the Fetch Dorado testnet faucet.
+
 ## Repository
 
 | Path | What |
@@ -28,6 +69,7 @@ Customers are polite. "Cool idea" and "I'd use that" feel like validation, but t
 | `apps/web` | Next.js 16 app: pages, `/api` routes, Drizzle schema, anonymous session. The only thing that touches Postgres. |
 | `services/analyzer` | Python + FastAPI analysis pipeline. Stateless. |
 | `packages/contracts` | `analyze.schema.json`, the contract both services agree on. |
+| `agents` | Fetch.ai uAgents for ASI:One and the web chat: a front agent and three specialists that run the analyzer pipeline, plus a tester. See [`agents/README.md`](agents/README.md). |
 | `scripts/journey.py` | The 9-step main journey, run against any URL. |
 | `docs/` | [`PRD.md`](docs/PRD.md) (what and why) and [`SPEC.md`](docs/SPEC.md) (how). |
 | `MISSION.md`, `FACTORY_RULES.md`, `FACTORY.md` | The dark-factory guidance layer (what the autonomous builder may and may not do). |
@@ -52,6 +94,19 @@ Try it:
 python3 scripts/journey.py http://localhost:3000 real_pain    # expects keep_going, score > 70
 python3 scripts/journey.py http://localhost:3000 polite       # expects pivot or need_more_evidence, score < 30
 ```
+
+### If every page except the home page says "This page doesn't exist"
+
+This happened once in local development: `/` loaded, but `/ideas`, `/chat` and every idea page returned the not-found page, while the `/api` routes kept working and the data was saved correctly.
+
+- **Why:** `next dev` was started on top of a `apps/web/.next` folder that a production `next build` had just written, while `next typegen` (part of `pnpm validate`) was writing to the same folder. The dev server came up with a route table that knew only the home page. Nothing was wrong in the code or the database.
+- **Fix:** stop the dev server, delete the build folder, start it again:
+
+```bash
+rm -rf apps/web/.next && pnpm --filter web dev
+```
+
+- **Avoid it:** don't run `pnpm --filter web build` or `pnpm validate` in this folder while the dev server is running. Use a second checkout (`git worktree add`) for that.
 
 ## Test
 
