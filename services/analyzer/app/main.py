@@ -1,4 +1,4 @@
-"""Real Signal analyzer. Private service: receives data, returns JSON, never touches a database."""
+"""ValiDate analyzer. Private service: receives data, returns JSON, never touches a database."""
 import hmac
 import logging
 import os
@@ -27,7 +27,7 @@ from app.pipeline.transcribe import ElevenLabsTranscriber, FakeTranscriber  # no
 from app.pipeline.writer import OPENAI_MODEL, FakeWriter, OpenAIWriter  # noqa: E402
 
 logger = logging.getLogger("analyzer")
-app = FastAPI(title="Real Signal analyzer")
+app = FastAPI(title="ValiDate analyzer")
 
 
 def fake_mode() -> bool:

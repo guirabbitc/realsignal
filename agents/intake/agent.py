@@ -1,4 +1,4 @@
-"""Real Signal Intake agent. Called only by the front agent."""
+"""ValiDate Intake agent. Called only by the front agent."""
 import sys
 from pathlib import Path
 
@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from common import make_agent  # noqa: E402
 from specialists import intake_proto  # noqa: E402
 
-agent = make_agent("INTAKE", "Real Signal Intake")
+agent = make_agent("INTAKE", "ValiDate Intake")
 agent.include(intake_proto, publish_manifest=True)
 
 if __name__ == "__main__":

@@ -1,9 +1,9 @@
-# Real Signal
+# ValiDate
 
 ![tag:innovationlab](https://img.shields.io/badge/innovationlab-3D8BD3)
 ![tag:hackathon](https://img.shields.io/badge/hackathon-5F43F1)
 
-Real Signal reads a customer interview, separates real demand from politeness, and tells the founder what to do next: keep going, narrow down, try a new angle, or pivot. Every verdict cites the sentences behind it.
+ValiDate reads a customer interview, separates real demand from politeness, and tells the founder what to do next: keep going, narrow down, try a new angle, or pivot. Every verdict cites the sentences behind it.
 
 It measures evidence of real demand. It does not judge whether anyone is lying.
 
@@ -19,7 +19,7 @@ There are two ways in: the web app, and a team of agents in ASI:One (built for t
 
 | Agent | Role | Address |
 | --- | --- | --- |
-| Real Signal (front) | The agent you talk to in ASI:One. Chat Protocol, file uploads. Plans the steps and calls the others. | `agent1q04gnfnfl0sl0qusvte6rd0gnzhvtvhzpjceugx9p07wuny8lswlvj0g4mn` |
+| ValiDate (front) | The agent you talk to in ASI:One. Chat Protocol, file uploads. Plans the steps and calls the others. | `agent1q04gnfnfl0sl0qusvte6rd0gnzhvtvhzpjceugx9p07wuny8lswlvj0g4mn` |
 | Intake | Turns a recording into a transcript with speaker labels | `agent1q0exnynml2849c0kmafyth4mem8xgs9fzx5yqmyzep8uc7za7lmyssrqeqq` |
 | Signal Analyst | Labels each sentence, scores the interview, picks the verdict | `agent1q08gppxzdjsvrczrmref9gmd96lpawgdwhx6vpdv6vqc688j72rgutk3qar` |
 | Strategist | Writes the summary and next steps | `agent1qve9d7cjnn60y8v9ajt5gdz27z0zwvv880q4a04ge3jg4yx2p55hw7hpkqc` |

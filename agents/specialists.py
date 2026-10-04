@@ -15,9 +15,9 @@ from models import (
     Written,
 )
 
-intake_proto = Protocol(name="RealSignalIntake", version="0.1.0")
-analyst_proto = Protocol(name="RealSignalAnalyst", version="0.1.0")
-strategist_proto = Protocol(name="RealSignalStrategist", version="0.1.0")
+intake_proto = Protocol(name="ValiDateIntake", version="0.1.0")
+analyst_proto = Protocol(name="ValiDateAnalyst", version="0.1.0")
+strategist_proto = Protocol(name="ValiDateStrategist", version="0.1.0")
 
 
 @intake_proto.on_message(IntakeRequest, replies={TranscriptReady, StageError})

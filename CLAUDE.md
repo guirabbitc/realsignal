@@ -1,4 +1,4 @@
-# Real Signal
+# ValiDate
 
 Analyzes customer interviews to separate real demand from politeness and tells the founder to keep going, narrow down, try a new angle, or pivot. Monorepo, modular monolith: one repo, one product, two app services (Next.js and the Python analyzer) plus Postgres. The `agents/` folder is a hackathon shell for the Fetch.ai ASI:One track (MHacks 2026).
 
