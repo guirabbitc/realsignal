@@ -11,4 +11,4 @@ node_modules/
 *.tsbuildinfo
 .pytest_cache/
 next-env.d.ts
-evals/results/
+services/analyzer/evals/results/
