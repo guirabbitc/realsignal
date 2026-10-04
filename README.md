@@ -68,7 +68,13 @@ uv run --project agents python agents/front/agent.py
 
 On first start, open the "Agent inspector" link in the log and choose **Connect → Mailbox**. In ASI:One, say hi to the agent. It asks for the idea you are testing, then for the interview: paste the transcript or upload it as a `.txt` file.
 
-To run the full team, start `agents/intake/agent.py`, `agents/analyst/agent.py` and `agents/strategist/agent.py` the same way, connect each mailbox, and set `FRONT_USE_SPECIALISTS=1`.
+To run the full team in one terminal:
+
+```bash
+uv run --project agents python agents/run_team.py
+```
+
+Connect the mailbox of each specialist from its inspector link (once), and set `FRONT_USE_SPECIALISTS=1`. A reply that went through the team ends with "Handled by the ValiDate team". If a specialist does not answer, the front agent calls the analyzer itself.
 
 ## Tests
 

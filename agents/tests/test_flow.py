@@ -111,3 +111,15 @@ def test_new_idea_replaces_the_old_one(calls):
     say(ctx, IDEA)
     say(ctx, "new idea: A tool that books dog walkers")
     assert ctx.storage.get("idea:founder") == "A tool that books dog walkers"
+
+
+def test_specialists_down_falls_back_to_the_analyzer(calls, monkeypatch):
+    async def down(ctx, idea, transcript, audio):
+        raise flow.StageFailed("Intake did not answer")
+
+    monkeypatch.setenv("FRONT_USE_SPECIALISTS", "1")
+    monkeypatch.setattr(flow, "_via_specialists", down)
+    ctx = FakeCtx()
+    say(ctx, IDEA)
+    reply = say(ctx, TRANSCRIPT)
+    assert "Verdict" in reply and "Handled by" not in reply and calls == [(IDEA, TRANSCRIPT)]

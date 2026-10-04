@@ -94,6 +94,7 @@ pnpm -r build && pnpm typecheck
 uv run --project agents python agents/tests/smoke_chat.py direct        # or: specialists
 cd agents && uv run pytest tests/test_flow.py                           # the front agent's conversation
 uv run --project agents python agents/front/agent.py
+uv run --project agents python agents/run_team.py                        # all four agents, one terminal
 ```
 
 ## How to change things

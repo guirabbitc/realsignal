@@ -19,7 +19,9 @@ from models import (
     Written,
 )
 
-STAGE_TIMEOUT_SECONDS = 300
+# Per specialist. Kept short so a specialist that is down does not stall the founder for long.
+STAGE_TIMEOUT_SECONDS = 45
+TEAM_TRACE = "_Handled by the ValiDate team: Intake → Signal Analyst → Strategist_"
 TOP_QUOTES = 3
 SPEAKER_LINE = re.compile(r"^\s*[^:\n]{1,40}:\s+\S", re.MULTILINE)
 
@@ -154,15 +156,23 @@ def is_small_talk(text: str) -> bool:
 
 
 async def _analyze(ctx: Context, idea: str, transcript: str | None, audio: Upload | None) -> str:
+    trace = ""
     try:
         if use_specialists():
-            result = await _via_specialists(ctx, idea, transcript, audio)
+            try:
+                result = await _via_specialists(ctx, idea, transcript, audio)
+                trace = f"\n\n{TEAM_TRACE}"
+                ctx.logger.info("Answered through the specialists")
+            except StageFailed as ex:
+                # Planned fallback: the front agent calls the analyzer itself.
+                ctx.logger.warning(f"Specialists unavailable ({ex}); calling the analyzer directly")
+                result = await _direct(idea, transcript, audio)
         else:
             result = await _direct(idea, transcript, audio)
     except Exception as ex:
         ctx.logger.error(f"Analysis failed: {ex}")
         return f"I could not analyze this interview. {ex}"
-    return f"{render(result)}\n\n{AFTER_VERDICT}"
+    return f"{render(result)}{trace}\n\n{AFTER_VERDICT}"
 
 
 async def handle_founder_input(ctx: Context, sender: str, texts: list[str], uploads: list[Upload]) -> str:

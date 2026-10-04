@@ -69,6 +69,7 @@ Dropped from the hackathon plan for now: the Market Check agent, cross-interview
 
 ## Changelog
 
+- **2026-10-04** Multi-agent path made demo-ready: `agents/run_team.py` starts all four agents in one terminal; a reply that went through the specialists ends with a "Handled by the ValiDate team" line; if a specialist does not answer within 45 s the front agent falls back to `/analyze`.
 - **2026-10-04** Writer model changed to `gpt-4.1-nano` to keep testing cheap (about $0.00014 per analysis, measured). `gpt-5-nano` has a lower list price but its reasoning tokens made it about 5x more expensive and 12 s slow. Set `OPENAI_MODEL` to override.
 - **2026-10-04** First live run with real Jev and OpenAI keys; the Jev request and response shapes matched the client as written. The analyzer no longer needs an ElevenLabs key for transcript-only requests.
 - **2026-10-03** Front agent conversation rewritten after the first ASI:One test: it now introduces itself, asks for the idea, then asks for the interview, and no longer needs the `idea:` prefix. Added `agents/tests/test_flow.py` (11 tests, offline).
