@@ -43,6 +43,10 @@ class FakeCtx:
     def __init__(self):
         self.storage = FakeStorage()
         self.logger = logging.getLogger("test")
+        self.sent = []  # (destination, message), in order
+
+    async def send(self, destination, message):
+        self.sent.append((destination, message))
 
 
 @pytest.fixture

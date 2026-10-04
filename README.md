@@ -37,6 +37,8 @@ The same analysis runs as a team of four agents, registered on Agentverse and re
 
 - **Orchestration:** valiDate calls Intake, then the Signal Analyst, then the Strategist, with typed agent-to-agent messages, and merges their answers. If a teammate does not answer in 45 s, it runs that step itself; it never invents a verdict.
 - **Each specialist also works on its own** in ASI:One, through the same Chat Protocol.
+- **Interactive cards:** in ASI:One the verdict comes with a card and buttons for the next step.
+- **Payment Protocol:** the verdict and read-out are free; the sentence-by-sentence breakdown is paid in FET (Fetch testnet). The agent checks the transfer on the ledger before it delivers.
 - **In the web app:** the "Ask the agents" window on every page, and the "Chat with the agents" page, are the same conversation with the same agents.
 - **Measured:** a fifth agent, the tester, plays a founder against the team and scores its answers against an answer key.
 

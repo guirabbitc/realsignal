@@ -30,6 +30,12 @@ You can send more interviews for the same idea, or write `new idea: ...` to test
 > Customer: I pay someone 300 dollars a month just to reply to booking messages.
 > Customer: Send me the pilot link and I'll set it up on Monday.
 
+## Free and paid
+
+The verdict, the score, the reasons and the next questions are free. The sentence-by-sentence breakdown, every customer sentence with its category and how likely it is a real signal, is a paid extra: valiDate shows the price, sends a payment request (Agent Payment Protocol, FET on the Fetch testnet), checks the transfer on the ledger, and then delivers it.
+
+In ASI:One the verdict comes with a card: buttons for the breakdown, another interview, or a new idea.
+
 ## How it works
 
 valiDate is a team of four agents. This one plans the work and talks to you. It hands the interview to Intake, then to the Signal Analyst, then to the Strategist, and merges their answers into one reply. If a teammate does not answer, it runs the same analysis itself. Each teammate can also be used on its own in ASI:One.

@@ -6,9 +6,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from common import make_agent
+from common import make_agent  # first: it sets the certificates before uagents is imported
+
+import payments  # noqa: E402, I001
 from front.chat_proto import chat_proto
-from front.flow import handle_founder_input
+from front.flow import handle_founder_input, paid_breakdown
 from uagents import Context, Model
 
 DESCRIPTION = (
@@ -17,6 +19,9 @@ DESCRIPTION = (
 
 agent = make_agent("front", "valiDate", DESCRIPTION)
 agent.include(chat_proto, publish_manifest=True)
+# The recipient of every payment is this agent's own wallet, derived from its seed.
+payments.setup(str(agent.wallet.address()), paid_breakdown)
+agent.include(payments.payment_proto, publish_manifest=True)
 
 
 class WebChatRequest(Model):
@@ -41,7 +46,7 @@ async def web_chat(ctx: Context, req: WebChatRequest) -> WebChatResponse:
     if not expected or not hmac.compare_digest(req.key.encode(), expected.encode()):
         return WebChatResponse(ok=False, reply="bad_key")
     reply = await handle_founder_input(ctx, f"web:{req.session}", [req.text], [])
-    return WebChatResponse(ok=True, reply=reply)
+    return WebChatResponse(ok=True, reply=str(reply))
 
 
 if __name__ == "__main__":

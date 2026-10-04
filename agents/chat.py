@@ -6,6 +6,7 @@ Change from the template: instead of calling an LLM, the texts and files of a me
 handed to the agent's own `respond` function.
 """
 import base64
+import json
 import os
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
@@ -39,6 +40,21 @@ class Upload:
         return self.mime_type.startswith("text/")
 
 
+class Reply(str):
+    """A reply's text, with an optional ASI:One interactive card shown under it.
+
+    It is a str so that everything that only needs the text (the web chat, the tests) is unchanged.
+    """
+
+    card_kind: str | None
+    card_payload: dict | None
+
+    def __new__(cls, text: str, card_kind: str | None = None, card_payload: dict | None = None):
+        reply = super().__new__(cls, text)
+        reply.card_kind, reply.card_payload = card_kind, card_payload
+        return reply
+
+
 Respond = Callable[[Context, str, list[str], list[Upload]], Awaitable[str]]
 
 
@@ -48,6 +64,35 @@ def create_text_chat(text: str) -> ChatMessage:
         msg_id=uuid4(),
         content=[TextContent(type="text", text=text)],
     )
+
+
+def create_card_chat(text: str, card_kind: str, card_payload: dict) -> ChatMessage:
+    """The text, plus the card declaration ASI:One renders (interactive cards, protocol version 1)."""
+    return ChatMessage(
+        timestamp=datetime.utcnow(),
+        msg_id=uuid4(),
+        content=[
+            TextContent(type="text", text=text),
+            MetadataContent(
+                type="metadata",
+                # metadata values are strings on the wire, so the payload travels as JSON text
+                metadata={
+                    "card_protocol_version": "1",
+                    "requires_card_interaction": "true",
+                    "card_kind": card_kind,
+                    "card_payload": json.dumps(card_payload),
+                    "preferred_drawer_width_px": "540",
+                },
+            ),
+        ],
+    )
+
+
+def create_reply_chat(reply: str) -> ChatMessage:
+    kind, payload = getattr(reply, "card_kind", None), getattr(reply, "card_payload", None)
+    if kind and payload:
+        return create_card_chat(str(reply), kind, payload)
+    return create_text_chat(str(reply))
 
 
 def create_metadata(metadata: dict[str, str]) -> ChatMessage:
@@ -100,11 +145,16 @@ def make_chat_protocol(respond: Respond) -> Protocol:
                     ctx.logger.error(f"Failed to download resource: {ex}")
                     await ctx.send(sender, create_text_chat("Failed to download resource."))
             else:
-                ctx.logger.warning(f"Got unexpected content from {sender}")
+                ctx.logger.warning(f"Got unexpected content from {sender}: {type(item).__name__}")
 
         if texts or uploads:
             reply = await respond(ctx, sender, texts, uploads)
-            await ctx.send(sender, create_text_chat(reply))
+            status = await ctx.send(sender, create_reply_chat(reply))
+            # Lengths and delivery only, never the text.
+            ctx.logger.info(
+                f"Reply sent: {len(reply)} characters, card {getattr(reply, 'card_kind', None) or 'none'}, "
+                f"delivery {getattr(status, 'status', status)} {getattr(status, 'detail', '')}"
+            )
 
     @chat_proto.on_message(ChatAcknowledgement)
     async def handle_ack(ctx: Context, sender: str, msg: ChatAcknowledgement):
