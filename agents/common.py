@@ -15,7 +15,8 @@ from uagents import Agent, Context  # noqa: E402  (needs .env and SSL_CERT_FILE 
 def make_agent(prefix: str, name: str, description: str) -> Agent:
     """One fixed seed and one port per agent, both from the environment.
 
-    The description and the README.md next to the agent's file are published to Agentverse
+    The description (160 characters at most on Agentverse) and the README.md next to the
+    agent's file are published to Agentverse
     when the mailbox is connected through the inspector.
     """
     agent = Agent(

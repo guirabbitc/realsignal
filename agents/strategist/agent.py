@@ -8,7 +8,7 @@ from common import make_agent  # noqa: E402
 from specialists import strategist_proto  # noqa: E402
 
 DESCRIPTION = (
-    "Part of the ValiDate team. Turns a judged customer interview into a summary that cites the evidence and concrete next steps for the founder. Called by the ValiDate front agent."
+    "ValiDate team: turns a judged customer interview into a summary that cites the evidence, plus concrete next steps for the founder."
 )
 
 agent = make_agent("STRATEGIST", "ValiDate Strategist", DESCRIPTION)

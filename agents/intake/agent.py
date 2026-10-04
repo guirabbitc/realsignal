@@ -8,7 +8,7 @@ from common import make_agent  # noqa: E402
 from specialists import intake_proto  # noqa: E402
 
 DESCRIPTION = (
-    "Part of the ValiDate team. Turns what a founder sends (pasted text, a PDF or a recording) into a clean customer interview transcript with speaker labels. Called by the ValiDate front agent."
+    "ValiDate team: turns pasted text, a PDF or a recording into a clean customer interview transcript with speaker labels. Called by the ValiDate agent."
 )
 
 agent = make_agent("INTAKE", "ValiDate Intake", DESCRIPTION)

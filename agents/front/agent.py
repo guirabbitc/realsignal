@@ -8,7 +8,7 @@ from common import make_agent  # noqa: E402
 from front.chat_proto import chat_proto  # noqa: E402
 
 DESCRIPTION = (
-    "Analyzes customer interview transcripts for evidence of real demand. Labels each thing the interviewee said as real signal, polite or neutral, scores the interview, and tells the founder to keep going, narrow down, try a new angle or pivot."
+    "Reads a customer interview and finds evidence of real demand: labels each sentence, scores it, and says keep going, narrow down, try a new angle or pivot."
 )
 
 agent = make_agent("FRONT", "ValiDate", DESCRIPTION)
