@@ -2,9 +2,9 @@
 import { after } from "next/server";
 import { z } from "zod";
 
-import { AnalyzerCallError, analyze } from "@/lib/analyzer-client";
-import { createInterview, markInterviewFailed, saveAnalysis } from "@/lib/db/queries";
+import { createInterview } from "@/lib/db/queries";
 import { invalid, json, notFound, readJson } from "@/lib/http";
+import { runAnalysis } from "@/lib/run-analysis";
 import { getFounderId } from "@/lib/session";
 
 export const maxDuration = 300;
@@ -38,24 +38,16 @@ export async function POST(request: Request) {
   });
   if (!created) return notFound();
 
-  after(async () => {
-    const started = Date.now();
-    try {
-      const result = await analyze({
-        idea: created.idea.oneLiner,
-        transcript,
-        kind,
-        interviewee_label: interviewee_label ?? null,
-        audio_url: null,
-      });
-      await saveAnalysis(founderId, created.id, result);
-      console.info(`analysis done interview=${created.id} ms=${Date.now() - started} verdict=${result.verdict}`);
-    } catch (error) {
-      const code = error instanceof AnalyzerCallError ? error.code : "internal_error";
-      await markInterviewFailed(founderId, created.id, code);
-      console.warn(`analysis failed interview=${created.id} ms=${Date.now() - started} code=${code}`);
-    }
-  });
+  // The transcript is saved before this runs, so a failed analysis can always be tried again from it.
+  after(() =>
+    runAnalysis(founderId, created.id, {
+      idea: created.idea.oneLiner,
+      transcript,
+      kind,
+      interviewee_label: interviewee_label ?? null,
+      audio_url: null,
+    }),
+  );
 
   return json({ id: created.id, status: created.status }, 202);
 }

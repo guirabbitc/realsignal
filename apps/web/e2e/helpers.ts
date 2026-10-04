@@ -28,6 +28,30 @@ export async function mockTranscribe(page: Page, answer: TranscribeResult | "hol
   });
 }
 
+export const FAILED_ID = "6f1c2a9e-0b7d-4c41-9a53-2f8e1d7c4b10";
+export const FAILED_TRANSCRIPT =
+  "Founder: How do you handle reservations today?\nCustomer: I pay someone $300 a month to do it by hand.\n";
+
+/** An interview whose analysis failed (openai_failed); "Try again" moves it to processing. Counts retries. */
+export async function mockFailedInterview(page: Page, ideaId: string) {
+  const calls = { retry: 0 };
+  let status: "failed" | "processing" = "failed";
+  await page.route(`**/api/interviews/${FAILED_ID}`, (route) =>
+    route.fulfill({
+      json:
+        status === "failed"
+          ? { id: FAILED_ID, idea_id: ideaId, status, error: "openai_failed", result: null, transcript: FAILED_TRANSCRIPT }
+          : { id: FAILED_ID, idea_id: ideaId, status, error: null, result: null, transcript: null },
+    }),
+  );
+  await page.route(`**/api/interviews/${FAILED_ID}/retry`, (route) => {
+    calls.retry += 1;
+    status = "processing";
+    return route.fulfill({ status: 202, json: { id: FAILED_ID, status } });
+  });
+  return calls;
+}
+
 /** Polls the API until the analysis finishes; returns the result. */
 export async function waitForResult(page: Page, interviewId: string): Promise<AnalyzeResult> {
   let body: { status: string; error: string | null; result: AnalyzeResult | null } | null = null;

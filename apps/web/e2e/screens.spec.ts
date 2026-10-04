@@ -2,7 +2,7 @@
 import { resolve } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 
-import { audioEnabled, createIdea, mockTranscribe, recordedTranscription } from "./helpers";
+import { audioEnabled, createIdea, FAILED_ID, mockFailedInterview, mockTranscribe, recordedTranscription } from "./helpers";
 
 const OUT = resolve(__dirname, "../../../docs/features/audio-input/screens");
 
@@ -120,6 +120,13 @@ for (const width of [1440, 390]) {
       await page.getByRole("button", { name: "Use this recording" }).click();
       await expect(page.getByText("Transcription failed.")).toBeVisible();
       await shot(page, "failed");
+    });
+
+    test("analysis failed", async ({ page }) => {
+      await mockFailedInterview(page, await createIdea(page));
+      await page.goto(`/interviews/${FAILED_ID}`);
+      await expect(page.getByRole("region", { name: "Your saved transcript" })).toBeVisible();
+      await shot(page, "analysis-failed");
     });
 
     test("upload audio", async ({ page }) => {

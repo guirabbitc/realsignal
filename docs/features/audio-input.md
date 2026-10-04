@@ -29,7 +29,15 @@ The team recordings don't exist yet, so `scripts/make_tts_audio.py` read each te
   - `record-journey` with the fake mic playing `real_pain.wav` for 80 s: pass, and the review shows 2 voices.
   - Each full journey takes 6–9 s end to end; Scribe takes ~3 s of that.
 - **Cost of the run:** about 520 s of audio sent to Scribe (3 direct calls + 3 uploads + 1 recording). At the listed $0.22–0.27 per hour that is about **US$0.04**. Jev and OpenAI ran 6 analyses on top.
-- **Railway:** `ELEVENLABS_API_KEY` is set on the production `analyzer` service with `--skip-deploys`, so nothing redeployed. It takes effect on the next deploy. `AUDIO_INPUT_ENABLED` is **not** set on production `web`: turn it on only after #7 and #8 are merged and deployed.
+- **Railway:** `ELEVENLABS_API_KEY` is set on the production `analyzer`. After #7 and #8 were merged and deployed, `AUDIO_INPUT_ENABLED=true` was set on production `web` (2026-10-04). A production smoke test transcribed 75 s in 2.3 s with 2 voices and the right founder guess.
+
+### Never lose an interview (after the first production test, 2026-10-04)
+
+A 3-minute recording transcribed fine, but the analysis failed: the OpenAI organization had run out of credits (`429 insufficient_quota`). The founder saw "Analysis failed" with no way back to their words. The audio is gone by design (we don't keep it), but the transcript was saved. Fixes:
+
+- **Try again:** `POST /api/interviews/:id/retry` analyzes a failed interview again from its saved transcript. `created_at` moves to now so the 5-minute stale rule doesn't fail it at once. Owner only (404); only failed interviews (409 `not_failed`).
+- **The transcript on the failure screen:** `GET /api/interviews/:id` returns `transcript` only while the analysis is failed. The read-out shows it with Copy and Download .txt.
+- **Download audio:** after recording, and on the review and transcription-failed screens. The file stays on the founder's device; we still never store audio.
 
 ### Still to do with human recordings
 

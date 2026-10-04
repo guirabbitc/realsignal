@@ -11,6 +11,8 @@ export interface InterviewResponse {
   status: InterviewStatus;
   error: string | null;
   result: AnalyzeResult | null;
+  /** The saved transcript, sent only when the analysis failed. */
+  transcript?: string | null;
 }
 
 export type Group = "real" | "polite" | "neutral";

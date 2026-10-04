@@ -15,5 +15,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     status: loaded.interview.status,
     error: loaded.interview.error,
     result: toResult(loaded),
+    // Only after a failure: the founder sees their words are safe and can copy them or try again.
+    transcript: loaded.interview.status === "failed" ? loaded.interview.transcript : null,
   });
 }

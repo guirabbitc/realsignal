@@ -43,6 +43,10 @@ test("record → stop → use it → confirm the voice → the transcript lands 
   );
   expect(live, "microphone tracks still live after Stop").toBe(0);
 
+  // We never keep the audio, so the founder can keep their own copy.
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("link", { name: "Download audio" }).click()]);
+  expect(download.suggestedFilename()).toMatch(/^interview-\d{4}-\d{2}-\d{2}-\d{4}\.(webm|m4a)$/);
+
   const [request] = await Promise.all([
     page.waitForRequest("**/api/transcribe"),
     page.getByRole("button", { name: "Use this recording" }).click(),
@@ -58,6 +62,7 @@ test("record → stop → use it → confirm the voice → the transcript lands 
 
   await expect(page.getByText("Which voice is you?")).toBeVisible({ timeout: real ? 290_000 : 15_000 });
   await expect(page.getByRole("group", { name: /Which voice is you/ }).getByRole("radio")).toHaveCount(2);
+  await expect(page.getByRole("link", { name: "Download audio" })).toBeVisible();
   if (real) return; // the rest checks the recorded response's exact text
 
   // The guess is the voice asking the questions (it speaks second here), not simply the first voice.
