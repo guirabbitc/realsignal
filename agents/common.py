@@ -14,7 +14,7 @@ from uagents import Agent, Context
 from uagents_core.identity import Identity
 
 # One port per local agent.
-PORTS = {"front": 8001, "intake": 8002, "analyst": 8003, "strategist": 8004}
+PORTS = {"front": 8001, "intake": 8002, "analyst": 8003, "strategist": 8004, "tester": 8005}
 
 
 def seed_of(role: str) -> str:

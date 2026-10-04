@@ -8,7 +8,7 @@ from pathlib import Path
 from uagents_core.identity import Identity
 
 ENV = Path(__file__).resolve().parents[1] / ".env"
-ROLES = ["FRONT", "INTAKE", "ANALYST", "STRATEGIST"]
+ROLES = ["FRONT", "INTAKE", "ANALYST", "STRATEGIST", "TESTER"]
 
 
 def main() -> None:

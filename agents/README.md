@@ -35,6 +35,16 @@ uv run --project agents python agents/tests/smoke_chat.py     # four agents in o
 uv run --project agents python agents/tests/smoke_chat.py --serve --live   # a local team on port 8099, real APIs
 ```
 
+## Measure accuracy with the tester agent
+
+`tester/agent.py` is a fifth agent (port 8005) that plays a founder. For every case it chats with the front agent, which runs the whole team, and asks the Signal Analyst for its judgment of each sentence; then it scores both against an answer key.
+
+1. Give `tester/generate_cases_prompt.md` to another LLM. It returns 30 synthetic interviews with an answer key, 10 per reply, as JSON.
+2. Save each reply as a file in `tester/cases/`.
+3. With the team running: `uv run --project agents python agents/tester/agent.py`. The first time, connect its mailbox from the inspector link and run it again.
+
+The report gives verdict accuracy (exact, and within the key's allowed set), category accuracy (exact, and by group: real / polite / none), founder-flag accuracy, and every disagreement. It also lists broken cases, where the key expects a verdict from an interview too thin to pass the analyzer's gate. `--local` runs the same scoring on the pipeline directly, without agents, which is much faster while tuning. Reports are saved in `tester/results/` (git-ignored).
+
 ## Files
 
 | File | What |
